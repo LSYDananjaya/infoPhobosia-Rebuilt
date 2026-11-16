@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { scienceData } from "@/data/scienceData";
 import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
 import { LiquidGlassCard } from "@/components/ui/LiquidGlassCard";
+import { TelemetryGauge } from "@/components/ui/TelemetryScramble";
 import { handleTabListKeyDown, readQueryParam, syncQueryParams } from "@/lib/uiHelpers";
 
 const EASE_OUT = [0.23, 1, 0.32, 1] as const;
@@ -57,8 +58,25 @@ export function SciencePipelineBand() {
               Instead of sculpting generic terrain, PHOBOSIA ingests real NASA Digital Terrain Models from the Mars Reconnaissance Orbiter, transforming raw planetary rasters into a 4 km x 4 km navigable WebGL desert.
             </p>
 
-            {/* Target Region Snapshot */}
-            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 font-mission text-xs">
+            {/* Target Region Snapshot + Radial Telemetry Gauges */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <TelemetryGauge
+                label="HiRISE Resolution"
+                valueLabel="1.0 m / px DTM"
+                sublabel="DTEEC_017983_1865"
+                percent={96}
+                accent="cyan"
+              />
+              <TelemetryGauge
+                label="GPU Rock Scatter"
+                valueLabel="100,000+ Meshes"
+                sublabel="60 FPS Instanced"
+                percent={88}
+                accent="mars"
+              />
+            </div>
+
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mission text-xs">
               <div className="p-4 rounded-2xl liquid-glass-card">
                 <dt className="text-xs text-slate-400 uppercase">Target Region</dt>
                 <dd className="text-white mt-1">{scienceData.region.name}</dd>

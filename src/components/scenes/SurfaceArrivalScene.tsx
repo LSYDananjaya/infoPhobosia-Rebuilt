@@ -133,7 +133,7 @@ export function SurfaceArrivalStage() {
         asset={sceneAssets.marsTerrain}
         layer="rocks-left"
         depth={1.38}
-        className="absolute bottom-[-16%] left-[-12%] w-[clamp(260px,36vw,600px)] z-[6] hidden md:block"
+        className="absolute bottom-[-16%] left-[-12%] w-[clamp(180px,42vw,600px)] z-[6]"
         filter="blur(5px) brightness(0.44)"
         flip
       />

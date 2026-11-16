@@ -252,21 +252,19 @@ export function OrbitalApproachScene() {
               { xPercent: 0 },
               { xPercent: 330, duration: 0.12, ease: "power1.inOut" },
               0.17
-            );
-
-          if (desktop) {
-            tl.fromTo(
+            )
+            .fromTo(
               "[data-layer=ast-far]",
-              { x: "-16vw", y: "-4vh", rotate: -6, scale: 0.85 },
-              { x: "22vw", y: "-12vh", rotate: 24, scale: 1.05, duration: 0.48 },
+              { x: desktop ? "-16vw" : "-12vw", y: "-4vh", rotate: -6, scale: 0.85 },
+              { x: desktop ? "22vw" : "18vw", y: "-12vh", rotate: 24, scale: 1.05, duration: 0.48 },
               0
-            ).fromTo(
+            )
+            .fromTo(
               "[data-layer=ast-near]",
-              { x: "78vw", y: "22vh", scale: 0.88, rotate: 6 },
-              { x: "-118vw", y: "-10vh", scale: 1.28, rotate: -30, duration: 0.22 },
+              { x: desktop ? "78vw" : "66vw", y: "22vh", scale: desktop ? 0.88 : 0.78, rotate: 6 },
+              { x: desktop ? "-118vw" : "-95vw", y: "-10vh", scale: desktop ? 1.28 : 1.08, rotate: -30, duration: 0.22 },
               0.22
             );
-          }
 
           // ==================================================================
           // SEAMLESS HORIZON CROSS-DISSOLVE (0.44 -> 0.55)
@@ -370,16 +368,13 @@ export function OrbitalApproachScene() {
               { yPercent: 40, xPercent: 10, scale: 1.08 },
               { yPercent: -18, xPercent: 0, scale: 1, duration: 0.54 },
               0.46
-            );
-
-          if (desktop) {
-            tl.fromTo(
+            )
+            .fromTo(
               "[data-layer=rocks-left]",
               { yPercent: 46, xPercent: -10, scale: 1.08 },
               { yPercent: -14, xPercent: 0, scale: 1, duration: 0.54 },
               0.46
             );
-          }
 
           // ==================================================================
           // 6-BEAT KINETIC CAPTION CHOREOGRAPHY (0..2 Orbital, 3..5 Surface)
@@ -468,7 +463,7 @@ export function OrbitalApproachScene() {
             asset={sceneAssets.asteroidField}
             layer="ast-far"
             depth={0.22}
-            className="absolute top-[14%] left-[8%] w-[clamp(120px,15vw,210px)] opacity-45 hidden md:block"
+            className="absolute top-[14%] left-[8%] w-[clamp(95px,22vw,210px)] opacity-45"
             filter="blur(2.5px) brightness(0.72)"
           />
 
@@ -554,7 +549,7 @@ export function OrbitalApproachScene() {
             asset={sceneAssets.asteroidField}
             layer="ast-near"
             depth={1.32}
-            className="absolute bottom-[-10%] left-[-6%] w-[clamp(260px,44vw,620px)] z-[5] hidden md:block"
+            className="absolute bottom-[-10%] left-[-6%] w-[clamp(180px,48vw,620px)] z-[5]"
             filter="blur(5.5px) brightness(0.62)"
             flip
           />

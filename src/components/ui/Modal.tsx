@@ -4,7 +4,6 @@ import React, { useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
-import { LiquidGlassSurface } from "@/components/ui/LiquidGlassSurface";
 
 interface ModalProps {
   isOpen: boolean;
@@ -94,9 +93,9 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = "max-w-4xl"
                     transition: { duration: 0.14, ease: EASE_OUT },
                   }
             }
-            className={`relative z-10 w-full ${maxWidth} liquid-glass-card liquid-glass-card--cyan rounded-[28px] overflow-hidden text-slate-100 my-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70`}
+            className={`relative z-10 w-full ${maxWidth} liquid-glass-card liquid-glass-card--cyan liquid-glass-card--showcase rounded-[28px] overflow-hidden text-slate-100 my-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70`}
           >
-            <LiquidGlassSurface accent="cyan" glassAlpha={0.56} />
+            
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/12 bg-space-950/55">
               {title ? (

@@ -16,16 +16,16 @@ export function queueScrollRefresh() {
 }
 
 /**
- * Sets up a damped 2.5D pointer depth rig on any [data-depth] descendants
- * inside `container`. Only active on fine-pointer devices and only while
- * the section is in the viewport. Returns a cleanup function.
+ * Sets up a damped 2.5D depth rig on any [data-depth] descendants inside `container`.
+ * Uses pointer movement on fine-pointer devices and touch + scroll-driven depth parallax
+ * on mobile/touch viewports while the section is in the viewport.
  */
 export function setupPointerParallax(container: HTMLElement | null, maxShift = 20): () => void {
   if (typeof window === "undefined" || !container) return () => {};
-  const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (!canHover || reduceMotion) return () => {};
+  if (reduceMotion) return () => {};
 
+  const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
   const nodes = Array.from(container.querySelectorAll<HTMLElement>("[data-depth]"));
   if (!nodes.length) return () => {};
 
@@ -40,13 +40,34 @@ export function setupPointerParallax(container: HTMLElement | null, maxShift = 2
   });
 
   let active = true;
+  let pointerX = 0;
+  let pointerY = 0;
+  let scrollProgress = 0.5;
+
+  const applyTargets = () => {
+    const mobileScale = canHover ? 0.45 : 1.0;
+    const yScrollFactor = (scrollProgress - 0.5) * maxShift * 1.35 * mobileScale;
+    const xScrollFactor = Math.sin(scrollProgress * Math.PI * 2) * (maxShift * 0.35) * mobileScale;
+    for (const t of targets) {
+      t.xTo((-pointerX * maxShift + xScrollFactor) * t.depth);
+      t.yTo((-pointerY * (maxShift * 0.7) + yScrollFactor) * t.depth);
+      t.rTo((pointerX * 1.15 + (scrollProgress - 0.5) * 1.4) * t.depth);
+    }
+  };
+
   const st = ScrollTrigger.create({
     trigger: container,
     start: "top bottom",
     end: "bottom top",
+    onUpdate: (self) => {
+      scrollProgress = self.progress;
+      if (active) applyTargets();
+    },
     onToggle: (self) => {
       active = self.isActive;
       if (!active) {
+        pointerX = 0;
+        pointerY = 0;
         targets.forEach((t) => {
           t.xTo(0);
           t.yTo(0);
@@ -58,18 +79,23 @@ export function setupPointerParallax(container: HTMLElement | null, maxShift = 2
 
   const onMove = (e: PointerEvent) => {
     if (!active) return;
-    const nx = (e.clientX / window.innerWidth - 0.5) * 2; // -1 .. 1
-    const ny = (e.clientY / window.innerHeight - 0.5) * 2; // -1 .. 1
-    for (const t of targets) {
-      t.xTo(-nx * maxShift * t.depth);
-      t.yTo(-ny * (maxShift * 0.7) * t.depth);
-      t.rTo(nx * 1.15 * t.depth);
-    }
+    pointerX = (e.clientX / window.innerWidth - 0.5) * 2; // -1 .. 1
+    pointerY = (e.clientY / window.innerHeight - 0.5) * 2; // -1 .. 1
+    applyTargets();
+  };
+
+  const onTouchMove = (e: TouchEvent) => {
+    if (!active || !e.touches[0]) return;
+    pointerX = (e.touches[0].clientX / window.innerWidth - 0.5) * 2;
+    pointerY = (e.touches[0].clientY / window.innerHeight - 0.5) * 2;
+    applyTargets();
   };
 
   window.addEventListener("pointermove", onMove, { passive: true });
+  window.addEventListener("touchmove", onTouchMove, { passive: true });
   return () => {
     window.removeEventListener("pointermove", onMove);
+    window.removeEventListener("touchmove", onTouchMove);
     st.kill();
   };
 }

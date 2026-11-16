@@ -82,7 +82,7 @@ export function HorizonRise() {
         asset={sceneAssets.astronaut}
         layer="astronaut"
         depth={0.78}
-        className="absolute bottom-[3%] right-[2%] xl:right-[5%] 2xl:right-[8%] w-[clamp(165px,14vw,255px)] hidden lg:block z-[2]"
+        className="absolute bottom-[2%] right-[1%] lg:right-[2%] xl:right-[5%] 2xl:right-[8%] w-[clamp(112px,26vw,255px)] block opacity-85 lg:opacity-100 z-[2]"
         filter="brightness(0.94)"
         rimGlow="mars"
         glint

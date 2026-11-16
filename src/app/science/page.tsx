@@ -6,6 +6,7 @@ import { scienceData } from "@/data/scienceData";
 import { Database, Orbit, Layers, ShieldCheck, Cpu, Code2, ExternalLink, ArrowRight } from "lucide-react";
 import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
 import { LiquidGlassCard } from "@/components/ui/LiquidGlassCard";
+import { TelemetryScramble } from "@/components/ui/TelemetryScramble";
 import { PageTelemetryLayout } from "@/components/layout/PageTelemetryLayout";
 import type { RailTocItem } from "@/components/ui/RailToc";
 
@@ -34,9 +35,9 @@ export default function SciencePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Page Intro */}
         <div className="max-w-3xl mb-16">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mission uppercase tracking-wider bg-cyan-950/50 border border-cyan-800/60 text-cyan-400 mb-4">
-            <Database className="w-3.5 h-3.5" />
-            <span>Empirical Planetary Science &amp; Geospatial Processing</span>
+          <span className="telemetry-chip text-cyan-300 mb-4">
+            <Database className="w-3.5 h-3.5 text-cyan-400" />
+            <TelemetryScramble text="EMPIRICAL PLANETARY SCIENCE · HIRISE & MOLA" />
           </span>
           <h1 className="font-display text-4xl sm:text-5xl font-bold tracking-tight text-white">
             Mars Terrain &amp; Scientific Data

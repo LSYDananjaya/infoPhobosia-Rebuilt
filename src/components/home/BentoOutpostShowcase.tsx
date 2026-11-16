@@ -217,6 +217,7 @@ export function BentoOutpostShowcase() {
               as="article"
               tier="showcase"
               accent="cyan"
+              tilt
               backdropSrc={currentSector.image}
               className="md:col-span-6 lg:col-span-8 rounded-[28px] p-5 sm:p-6 flex flex-col justify-between gap-5"
             >
@@ -306,6 +307,7 @@ export function BentoOutpostShowcase() {
               as="article"
               tier="showcase"
               accent="mars"
+              tilt
               className="md:col-span-6 lg:col-span-4 lg:row-span-2 rounded-[28px] p-5 sm:p-6 flex flex-col justify-between gap-6"
             >
               <div className="space-y-4">
@@ -456,6 +458,7 @@ export function BentoOutpostShowcase() {
             as="article"
             tier="showcase"
             accent="cyan"
+            tilt
             className="md:col-span-3 lg:col-span-4 rounded-[28px] p-5 flex flex-col justify-between gap-4"
           >
             <div className="relative h-56 w-full rounded-[20px] liquid-glass-well overflow-hidden">
@@ -497,6 +500,7 @@ export function BentoOutpostShowcase() {
             as="article"
             tier="showcase"
             accent="mars"
+            tilt
             className="md:col-span-3 lg:col-span-4 rounded-[28px] p-5 flex flex-col justify-between gap-4"
           >
             <div className="relative h-56 w-full rounded-[20px] liquid-glass-well overflow-hidden">
@@ -538,6 +542,7 @@ export function BentoOutpostShowcase() {
             as="article"
             tier="showcase"
             accent="cyan"
+            tilt
             className="md:col-span-6 lg:col-span-6 rounded-[28px] p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-12 gap-5 items-center"
           >
             <div className="sm:col-span-5 relative h-56 sm:h-64 w-full rounded-[20px] liquid-glass-well overflow-hidden">
@@ -590,6 +595,7 @@ export function BentoOutpostShowcase() {
             as="article"
             tier="showcase"
             accent="amber"
+            tilt
             className="md:col-span-6 lg:col-span-6 rounded-[28px] p-5 sm:p-6 flex flex-col justify-between gap-4"
           >
             <div className="flex flex-wrap items-center justify-between gap-3">

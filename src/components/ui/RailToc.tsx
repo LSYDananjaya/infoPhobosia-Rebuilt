@@ -131,7 +131,8 @@ const RailToc = ({
       const prev = heading.get();
       heading.set(angle + 360 * Math.round((prev - angle) / 360));
       filled.set(l / length);
-      setReached(lengths.current.filter((n) => n <= l + 0.5).length);
+      const nextReached = lengths.current.filter((n) => n <= l + 0.5).length;
+      setReached((prev) => (prev === nextReached ? prev : nextReached));
     },
     [x, y, heading, filled]
   );
@@ -248,9 +249,15 @@ const RailToc = ({
     const onIntent = () => {
       userScrolled.current = true;
     };
+    let raf = 0;
     const onScroll = () => {
       if (pinned.current !== null && userScrolled.current) pinned.current = null;
-      sync();
+      if (!raf) {
+        raf = window.requestAnimationFrame(() => {
+          raf = 0;
+          sync();
+        });
+      }
     };
     scroller.addEventListener("scroll", onScroll, { passive: true });
     scroller.addEventListener("wheel", onIntent, { passive: true });
@@ -259,6 +266,7 @@ const RailToc = ({
     window.addEventListener("keydown", onIntent);
     window.addEventListener("resize", sync);
     return () => {
+      if (raf) window.cancelAnimationFrame(raf);
       scroller.removeEventListener("scroll", onScroll);
       scroller.removeEventListener("wheel", onIntent);
       scroller.removeEventListener("touchstart", onIntent);

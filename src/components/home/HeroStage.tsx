@@ -10,16 +10,21 @@ import {
   VolumeX,
 } from "lucide-react";
 import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
+import { TelemetryScramble, AnimatedCounter } from "@/components/ui/TelemetryScramble";
+import { sceneAssets } from "@/data/sceneAssets";
+import { SpriteImg } from "@/components/scenes/SceneSprite";
 
 export function HeroStage() {
   const heroRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const orbRef = useRef<HTMLDivElement>(null);
   const userPausedRef = useRef(false);
   const isInViewRef = useRef(true);
   const isMutedRef = useRef(true);
   const [isMuted, setIsMuted] = useState(true);
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [lmst, setLmst] = useState("14:22:08");
 
   const attemptAutoplay = useCallback(() => {
     const video = videoRef.current;
@@ -89,11 +94,56 @@ export function HeroStage() {
       observer.observe(section);
     }
 
+    // Live Local Mean Solar Time (LMST) clock ticker
+    const clockTimer = window.setInterval(() => {
+      const now = new Date();
+      const s = (now.getUTCSeconds() + 8) % 60;
+      const m = (now.getUTCMinutes() + 22) % 60;
+      const h = (now.getUTCHours() + 14) % 24;
+      const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+      setLmst(`${pad(h)}:${pad(m)}:${pad(s)}`);
+    }, 1000);
+
+    // Scroll-linked parallax for the hero planetary orb across both mobile and desktop
+    let scrollRaf = 0;
+    const onScroll = () => {
+      if (scrollRaf || mq.matches || !isInViewRef.current) return;
+      scrollRaf = window.requestAnimationFrame(() => {
+        scrollRaf = 0;
+        const orb = orbRef.current;
+        const hero = heroRef.current;
+        if (!orb || !hero) return;
+        const progress = Math.min(Math.max(-hero.getBoundingClientRect().top / Math.max(hero.offsetHeight, 1), 0), 1);
+        orb.style.transform = `translate3d(${(progress * -18).toFixed(1)}px, ${(progress * 42).toFixed(1)}px, 0) rotate(${(progress * 6).toFixed(2)}deg) scale(${(1 + progress * 0.08).toFixed(3)})`;
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
     return () => {
       mq.removeEventListener("change", onChange);
       observer?.disconnect();
+      window.clearInterval(clockTimer);
+      window.removeEventListener("scroll", onScroll);
+      if (scrollRaf) window.cancelAnimationFrame(scrollRaf);
     };
   }, [attemptAutoplay]);
+
+  const handleHeroPointerMove = (e: React.PointerEvent<HTMLElement>) => {
+    if (reducedMotion) return;
+    const section = heroRef.current;
+    const orb = orbRef.current;
+    if (!section || !orb) return;
+    const r = section.getBoundingClientRect();
+    const nx = (e.clientX - r.left) / r.width - 0.5;
+    const ny = (e.clientY - r.top) / r.height - 0.5;
+    orb.style.transform = `translate3d(${(nx * -22).toFixed(1)}px, ${(ny * -18).toFixed(1)}px, 0) rotate(${(nx * 4.5).toFixed(2)}deg)`;
+  };
+
+  const handleHeroPointerLeave = () => {
+    if (orbRef.current) {
+      orbRef.current.style.transform = "";
+    }
+  };
 
   const toggleSound = () => {
     const video = videoRef.current;
@@ -135,6 +185,8 @@ export function HeroStage() {
       ref={heroRef}
       id="hero"
       aria-labelledby="hero-heading"
+      onPointerMove={handleHeroPointerMove}
+      onPointerLeave={handleHeroPointerLeave}
       className="relative min-h-[100svh] flex flex-col justify-between overflow-hidden bg-space-950 pt-28 pb-8 sm:pt-32 sm:pb-10 lg:pt-36 lg:pb-12 border-b border-white/10"
     >
       {/* Ambient trailer backdrop */}
@@ -163,6 +215,68 @@ export function HeroStage() {
         <div className="absolute inset-0 bg-gradient-to-r from-space-950/92 via-space-950/75 lg:via-space-950/55 to-space-950/45 lg:to-space-950/15" />
       </div>
 
+      {/* Interactive 3D Planetary Fresnel Orb & Orbital Telemetry Overlay (Right Viewport) */}
+      <div
+        aria-hidden="true"
+        className="flex absolute right-[-12%] sm:right-[2%] lg:right-[5%] xl:right-[7%] top-[16%] sm:top-[22%] lg:top-1/2 lg:-translate-y-1/2 w-[220px] sm:w-[270px] lg:w-[310px] xl:w-[370px] opacity-55 sm:opacity-75 lg:opacity-100 aspect-square items-center justify-center pointer-events-none z-[5]"
+      >
+        <div
+          ref={orbRef}
+          className="relative w-full h-full transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]"
+        >
+          <span className="mars-halo opacity-85" />
+          <svg
+            viewBox="0 0 420 420"
+            className="absolute inset-[-22%] w-[144%] h-[144%] overflow-visible"
+          >
+            <defs>
+              <linearGradient id="hero-orbit-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="rgba(56,189,248,0)" />
+                <stop offset="45%" stopColor="rgba(56,189,248,0.55)" />
+                <stop offset="85%" stopColor="rgba(245,158,108,0.8)" />
+                <stop offset="100%" stopColor="rgba(245,158,108,0)" />
+              </linearGradient>
+            </defs>
+            <g transform="rotate(-16 210 210)">
+              <ellipse
+                cx="210"
+                cy="210"
+                rx="196"
+                ry="68"
+                fill="none"
+                stroke="rgba(255,255,255,0.12)"
+                strokeWidth="1"
+                strokeDasharray="3 6"
+              />
+              <ellipse
+                cx="210"
+                cy="210"
+                rx="196"
+                ry="68"
+                fill="none"
+                stroke="url(#hero-orbit-grad)"
+                strokeWidth="1.5"
+                strokeDasharray="420 900"
+              />
+              <g transform="translate(268, 152)">
+                <circle r="6" fill="none" stroke="#38bdf8" strokeWidth="1.25" />
+                <circle r="2" fill="#f59e6c" />
+              </g>
+            </g>
+          </svg>
+
+          <div className="relative w-full h-full rounded-full overflow-hidden shadow-[0_0_90px_-10px_rgba(217,75,50,0.42)]">
+            <SpriteImg asset={sceneAssets.mars} />
+            <span className="mars-terminator" />
+          </div>
+
+          <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 telemetry-chip text-cyan-200 whitespace-nowrap">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
+            <span>ORBIT LOCK · 4.5°N 135.9°E · {lmst} LMST</span>
+          </div>
+        </div>
+      </div>
+
       {/* Subtle horizon atmospheric glow */}
       <div
         aria-hidden="true"
@@ -172,12 +286,15 @@ export function HeroStage() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-1 flex flex-col justify-between">
         {/* Editorial Command Column */}
         <div className="my-auto py-4 sm:py-6 max-w-2xl space-y-5 sm:space-y-7">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-mission text-slate-300">
-            <span className="text-mars-300">Elysium Planitia</span>
-            <span aria-hidden="true" className="text-slate-500">/</span>
-            <span>4.5° N, 135.9° E</span>
-            <span aria-hidden="true" className="text-slate-500">/</span>
-            <span className="text-cyan-300">SOL 1 to 11</span>
+          <div className="flex flex-wrap items-center gap-2 text-xs font-mission text-slate-300">
+            <span className="telemetry-chip text-mars-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-mars-400" aria-hidden="true" />
+              <TelemetryScramble text="ELYSIUM PLANITIA · 4.5° N 135.9° E" />
+            </span>
+            <span className="telemetry-chip text-cyan-300">
+              <TelemetryScramble text="SOL 01 TO 11 · LMST" duration={640} />
+              <span className="text-white">{lmst}</span>
+            </span>
           </div>
 
           <h1
@@ -226,7 +343,7 @@ export function HeroStage() {
                 Terrain Grid
               </dt>
               <dd className="mt-0.5 text-sm font-mission text-white tabular-nums">
-                1.0 m/px HiRISE
+                <AnimatedCounter value={1.0} decimals={1} suffix=" m/px HiRISE" />
               </dd>
             </div>
             <div>
@@ -234,7 +351,7 @@ export function HeroStage() {
                 Architecture
               </dt>
               <dd className="mt-0.5 text-sm font-mission text-white tabular-nums">
-                5 Custom Pods
+                <AnimatedCounter value={5} suffix=" Custom Pods" />
               </dd>
             </div>
             <div>
@@ -242,7 +359,7 @@ export function HeroStage() {
                 Interfaces
               </dt>
               <dd className="mt-0.5 text-sm font-mission text-white tabular-nums">
-                20+ Consoles
+                <AnimatedCounter value={20} suffix="+ Consoles" />
               </dd>
             </div>
             <div>
@@ -250,7 +367,7 @@ export function HeroStage() {
                 Campaign
               </dt>
               <dd className="mt-0.5 text-sm font-mission text-cyan-300 tabular-nums">
-                11 Martian SOLs
+                <AnimatedCounter value={11} suffix=" Martian SOLs" />
               </dd>
             </div>
           </dl>

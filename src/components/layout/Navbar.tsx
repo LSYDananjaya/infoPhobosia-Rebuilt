@@ -21,7 +21,7 @@ import {
   User,
   Layers,
 } from "lucide-react";
-import { LiquidGlassSurface } from "@/components/ui/LiquidGlassSurface";
+import { GlassSurface } from "@/components/ui/GlassSurface";
 import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
 
 const primaryLinks = [
@@ -58,8 +58,22 @@ export function Navbar() {
   // Optimistic pending key so clicking a tab begins gliding immediately
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [isGliding, setIsGliding] = useState(false);
+  const [glide, setGlide] = useState({ sx: 1.08, sy: 0.95 });
+  const prevLeftRef = useRef(-1);
   const [isCapsulePressed, setIsCapsulePressed] = useState(false);
   const [indicatorReady, setIndicatorReady] = useState(false);
+  const [hudMode, setHudMode] = useState(false);
+
+  const toggleHudMode = useCallback(() => {
+    setHudMode((prev) => {
+      const next = !prev;
+      if (typeof document !== "undefined") {
+        if (next) document.documentElement.setAttribute("data-dossier", "on");
+        else document.documentElement.removeAttribute("data-dossier");
+      }
+      return next;
+    });
+  }, []);
 
   const navRef = useRef<HTMLDivElement>(null);
   const navRectRef = useRef<DOMRect | null>(null);
@@ -70,6 +84,16 @@ export function Navbar() {
   const dropdownRectRef = useRef<DOMRect | null>(null);
   const menuButtonRef = useRef<HTMLDivElement>(null);
   const menuItemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const mobileSheetRef = useRef<HTMLDivElement>(null);
+  const mobileListRef = useRef<HTMLElement>(null);
+  const mobileRowRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const [mobileLens, setMobileLens] = useState({
+    top: 0,
+    height: 0,
+    visible: false,
+    moving: false,
+  });
+  const mobileLensTimerRef = useRef<number | null>(null);
 
   const prevActiveKeyRef = useRef<string | null>(null);
   const glideTimerRef = useRef<number | null>(null);
@@ -153,6 +177,14 @@ export function Navbar() {
       setIndicator((prev) => (prev.visible ? { ...prev, visible: false } : prev));
       return;
     }
+    const dist = Math.abs(rect.left - prevLeftRef.current);
+    if (prevLeftRef.current >= 0 && dist > 6) {
+      setGlide({
+        sx: 1 + Math.min(0.24, dist / 640),
+        sy: 1 - Math.min(0.14, dist / 1300),
+      });
+    }
+    prevLeftRef.current = rect.left;
     setIndicator({
       left: rect.left,
       width: rect.width,
@@ -506,10 +538,88 @@ export function Navbar() {
     closeDropdown(false);
   };
 
+  const mobileActiveIdx = allLinks.findIndex((l) =>
+    l.href === "/" ? pathname === "/" : pathname.startsWith(l.href)
+  );
+
+  const moveMobileLens = useCallback(
+    (idx: number | null) => {
+      const target = idx ?? (mobileActiveIdx >= 0 ? mobileActiveIdx : null);
+      const row = target === null ? null : mobileRowRefs.current[target];
+      if (!row) {
+        setMobileLens((prev) => (prev.visible ? { ...prev, visible: false } : prev));
+        return;
+      }
+      setMobileLens((prev) => {
+        if (prev.visible && prev.top === row.offsetTop) return prev;
+        return {
+          top: row.offsetTop,
+          height: row.offsetHeight,
+          visible: true,
+          moving: prev.visible && !reducedMotion,
+        };
+      });
+      if (mobileLensTimerRef.current) window.clearTimeout(mobileLensTimerRef.current);
+      mobileLensTimerRef.current = window.setTimeout(() => {
+        setMobileLens((prev) => (prev.moving ? { ...prev, moving: false } : prev));
+      }, 200);
+    },
+    [mobileActiveIdx, reducedMotion]
+  );
+
+  const handleMobilePointer = (e: React.PointerEvent<HTMLElement>) => {
+    const y = e.clientY;
+    const idx = mobileRowRefs.current.findIndex((row) => {
+      if (!row) return false;
+      const r = row.getBoundingClientRect();
+      return y >= r.top && y <= r.bottom;
+    });
+    if (idx >= 0) moveMobileLens(idx);
+  };
+
+  const handleMobileKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "Tab") return;
+    const nodes = Array.from(
+      e.currentTarget.querySelectorAll<HTMLElement>("a[href], button:not([tabindex='-1'])")
+    );
+    if (nodes.length === 0) return;
+    const first = nodes[0];
+    const last = nodes[nodes.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+
+  // Place the lens on the active row once the sheet is open; lock page scroll while mounted.
+  useEffect(() => {
+    if (mobilePhase !== "open") return;
+    const raf = window.requestAnimationFrame(() => {
+      setMobileLens((prev) => ({ ...prev, moving: false }));
+      moveMobileLens(null);
+      mobileRowRefs.current[Math.max(0, mobileActiveIdx)]?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mobilePhase]);
+
+  useEffect(() => {
+    if (!mobileMounted) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+      setMobileLens({ top: 0, height: 0, visible: false, moving: false });
+    };
+  }, [mobileMounted]);
+
   const transformSuffix = isGliding
-    ? " scale(1.035, 0.94)"
+    ? ` scale(${glide.sx}, ${glide.sy})`
     : isCapsulePressed
-      ? " scale(0.96)"
+      ? " scale(1.1, 1.14)"
       : " scale(1, 1)";
 
   return (
@@ -550,11 +660,19 @@ export function Navbar() {
                 );
                 setIsCapsulePressed(false);
               }}
-              className={`flex items-center relative rounded-full liquid-glass-pill p-1.5 xl:p-2 gap-0.5 xl:gap-1 ${
+              className={`flex items-center relative rounded-full liquid-glass-pill liquid-glass-pill--refract p-1.5 xl:p-2 gap-0.5 xl:gap-1 ${
                 scrolled ? "liquid-glass-pill--scrolled" : ""
               } ${archiveOpen ? "liquid-glass-pill--dropdown-open" : ""}`}
             >
-              <LiquidGlassSurface mode="navbar" accent="neutral" glassAlpha={0.18} />
+              <GlassSurface
+                layer
+                distortionScale={-115}
+                displace={0.85}
+                blur={14}
+                backgroundOpacity={scrolled ? 0.32 : 0.16}
+                tint="rgba(10, 15, 28, 0.36)"
+                saturation={1.4}
+              />
 
               {/* Subtle sliding ghost glass hover indicator for inactive tabs */}
               <span
@@ -675,6 +793,16 @@ export function Navbar() {
                 }}
                 className="liquid-glass-dropdown right-0 top-[calc(100%+12px)] w-60 p-2 rounded-[24px] z-50"
               >
+                <GlassSurface
+                  layer
+                  borderRadius={24}
+                  distortionScale={-105}
+                  displace={0.9}
+                  blur={15}
+                  backgroundOpacity={0.26}
+                  tint="rgba(10, 15, 28, 0.52)"
+                  saturation={1.4}
+                />
                 <div className="relative z-10 flex flex-col gap-0.5">
                   {/* Shared gliding glass row selection pill aligned to layout offsetTop */}
                   <span
@@ -782,7 +910,27 @@ export function Navbar() {
           </div>
 
           {/* Right Zone: Detached Standalone Liquid Glass CTA Pill + Mobile Menu Toggle */}
-          <div className="justify-self-end flex items-center gap-1.5 sm:gap-3 shrink-0 pointer-events-auto">
+          <div className="justify-self-end flex items-center gap-1.5 sm:gap-2.5 shrink-0 pointer-events-auto">
+            <button
+              type="button"
+              onClick={toggleHudMode}
+              aria-pressed={hudMode}
+              title="Toggle Telemetry HUD Overlay"
+              className={`hidden sm:inline-flex items-center gap-1.5 px-3 min-h-[40px] rounded-full font-mission text-[11px] uppercase tracking-wider transition-all ${
+                hudMode
+                  ? "bg-cyan-400/20 text-cyan-200 border border-cyan-300/50 shadow-[0_0_18px_rgba(56,189,248,0.3)]"
+                  : "liquid-glass-tab text-slate-300 hover:text-white"
+              }`}
+            >
+              <span
+                aria-hidden="true"
+                className={`w-1.5 h-1.5 rounded-full ${
+                  hudMode ? "bg-cyan-300 shadow-[0_0_8px_#38bdf8]" : "bg-slate-400"
+                }`}
+              />
+              <span>HUD</span>
+            </button>
+
             <LiquidGlassButton
               href="https://phobosia.sim623.site/"
               target="_blank"
@@ -826,7 +974,7 @@ export function Navbar() {
       {/* Reserve clean top clearance on inner documentation pages */}
       {pathname !== "/" && <div aria-hidden="true" className="h-20 sm:h-24" />}
 
-      {/* Mobile Frosted Liquid Glass Morphing Sheet */}
+      {/* Mobile: liquid orb morph menu with a shared glass lens */}
       {mobileMounted && (
         <div
           id="mobile-liquid-nav"
@@ -834,26 +982,59 @@ export function Navbar() {
           aria-modal="true"
           aria-label="Mobile Navigation"
           data-phase={mobilePhase}
-          className="liquid-glass-mobile-backdrop fixed inset-0 z-40 lg:hidden flex flex-col justify-start pt-24 px-4 pb-6 overflow-y-auto overscroll-contain"
+          onKeyDown={handleMobileKeyDown}
+          className="liquid-glass-mobile-backdrop fixed inset-0 z-40 lg:hidden"
         >
           <button
             type="button"
             tabIndex={-1}
             aria-label="Close mobile navigation menu"
-            onClick={() => closeMobile(false)}
-            className="fixed inset-0 bg-space-950/75 backdrop-blur-xl cursor-default"
+            onClick={() => closeMobile(true)}
+            className="liquid-glass-mobile-scrim absolute inset-0 bg-space-950/60 backdrop-blur-md cursor-default"
           />
-          <div className="liquid-glass-mobile-sheet relative z-10 w-full max-w-md mx-auto liquid-glass-card liquid-glass-card--cyan p-4 space-y-2">
-            <LiquidGlassSurface accent="cyan" glassAlpha={0.48} />
-            <div className="px-3 py-1.5 flex items-center justify-between border-b border-white/15 pb-3">
-              <span className="font-mission text-xs text-slate-300 uppercase tracking-wider">
+          <div
+            ref={mobileSheetRef}
+            className="liquid-glass-mobile-sheet isolate absolute top-[76px] right-3 left-3 sm:left-auto sm:w-[22rem] max-h-[calc(100dvh-92px)] overflow-y-auto overscroll-contain rounded-[32px] p-3"
+          >
+            <GlassSurface
+              layer
+              borderRadius={32}
+              distortionScale={-105}
+              displace={0.9}
+              blur={16}
+              backgroundOpacity={0.28}
+              tint="rgba(10, 15, 28, 0.54)"
+              saturation={1.4}
+            />
+            <div className="relative z-10 flex items-center justify-between px-3 pt-2 pb-3">
+              <span className="font-mission text-[11px] uppercase tracking-[0.2em] text-slate-300">
                 Outpost Navigation
               </span>
-              <span className="font-mission text-xs text-mars-300">
-                SOL 1 to 11
+              <span className="font-mission text-[11px] text-mars-300">
+                SOL 1&ndash;11
               </span>
             </div>
-            <nav aria-label="Mobile Navigation Links" className="grid grid-cols-2 gap-2 pt-1">
+
+            <nav
+              ref={mobileListRef}
+              aria-label="Mobile Navigation Links"
+              onPointerMove={handleMobilePointer}
+              onPointerDown={handleMobilePointer}
+              onPointerLeave={() => moveMobileLens(null)}
+              className="relative flex flex-col gap-0.5"
+            >
+              <span
+                aria-hidden="true"
+                className="liquid-glass-mobile-lens pointer-events-none absolute left-0 right-0 top-0 z-[1] rounded-[22px]"
+                style={{
+                  height: `${mobileLens.height}px`,
+                  opacity: mobileLens.visible ? 1 : 0,
+                  transform: `translate3d(0, ${mobileLens.top}px, 0) scale(${
+                    mobileLens.moving ? "1.02, 0.94" : "1, 1"
+                  })`,
+                }}
+              />
+
               {allLinks.map((link, idx) => {
                 const isActive =
                   link.href === "/"
@@ -863,21 +1044,37 @@ export function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    style={{ "--tile-delay": `${16 + idx * 18}ms` } as React.CSSProperties}
+                    ref={(el) => {
+                      mobileRowRefs.current[idx] = el;
+                    }}
+                    aria-current={isActive ? "page" : undefined}
+                    style={{ "--tile-delay": `${50 + idx * 34}ms` } as React.CSSProperties}
+                    onFocus={() => moveMobileLens(idx)}
                     onClick={() => closeMobile(false)}
-                    className={`liquid-glass-mobile-tile px-3.5 py-3 rounded-2xl text-xs font-nav min-h-[44px] flex items-center transition-[background-color,border-color,color,transform] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.97] ${
-                      isActive
-                        ? "bg-white/20 text-white border border-white/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]"
-                        : "bg-white/[0.04] text-slate-200 hover:bg-white/10 hover:text-white border border-white/10"
+                    className={`liquid-glass-mobile-tile relative z-[2] flex items-center gap-4 rounded-[22px] px-4 min-h-[52px] font-nav text-[15px] select-none active:scale-[0.98] transition-[color,transform] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/80 ${
+                      isActive ? "text-white" : "text-slate-200/85"
                     }`}
                   >
-                    {link.label}
+                    <span
+                      className={`font-mission text-[11px] tabular-nums tracking-wider w-6 ${
+                        isActive ? "text-mars-300" : "text-slate-400"
+                      }`}
+                    >
+                      {String(idx + 1).padStart(2, "0")}
+                    </span>
+                    <span className="flex-1">{link.label}</span>
+                    <ChevronRight
+                      className={`w-4 h-4 transition-opacity ${
+                        isActive ? "opacity-90 text-cyan-200" : "opacity-30"
+                      }`}
+                      aria-hidden="true"
+                    />
                   </Link>
                 );
               })}
             </nav>
 
-            <div className="pt-3 border-t border-white/15 flex flex-col sm:flex-row gap-2">
+            <div className="liquid-glass-mobile-tile mt-3 pt-3 border-t border-white/12 flex flex-col sm:flex-row gap-2" style={{ "--tile-delay": "420ms" } as React.CSSProperties}>
               <LiquidGlassButton
                 href="https://phobosia.sim623.site/"
                 target="_blank"

@@ -12,6 +12,7 @@ import { ChevronUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { scrollToTarget } from "@/components/scenes/SmoothScrollProvider";
+import { GlassSurface } from "@/components/ui/GlassSurface";
 
 export type ScrollProgressSection = {
   id: string;
@@ -80,14 +81,27 @@ const ScrollProgress = ({
           break;
         }
       }
-      setActiveId(active?.id ?? sections[0]?.id);
+      setActiveId((prev) => {
+        const nextId = active?.id ?? sections[0]?.id;
+        return prev === nextId ? prev : nextId;
+      });
+    };
+
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(() => {
+        raf = 0;
+        update();
+      });
     };
 
     update();
-    scroller.addEventListener("scroll", update, { passive: true });
+    scroller.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", update);
     return () => {
-      scroller.removeEventListener("scroll", update);
+      if (raf) window.cancelAnimationFrame(raf);
+      scroller.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", update);
     };
   }, [sections, containerRef, offset]);
@@ -190,7 +204,6 @@ const ScrollProgress = ({
 
   const size = open ? openSize : collapsedSize;
   const radius = open ? 24 : (collapsedSize?.height ?? 38) / 2;
-  const squircle = "[corner-shape:squircle]";
 
   return (
     <div
@@ -211,7 +224,7 @@ const ScrollProgress = ({
       <div className="pointer-events-none invisible fixed -left-[9999px]" aria-hidden="true">
         <div
           ref={collapsedRef}
-          className="inline-flex items-center gap-2.5 py-2 pl-2.5 pr-3.5"
+          className="inline-flex items-center gap-2.5 border border-transparent py-2 pl-2.5 pr-3.5"
         >
           <span className="h-5 w-5 shrink-0" />
           <span
@@ -228,13 +241,13 @@ const ScrollProgress = ({
           <ChevronUp className="h-3.5 w-3.5 shrink-0" />
         </div>
 
-        <div ref={openRef} className="w-max max-h-[min(70dvh,440px)] overflow-hidden p-1.5">
+        <div ref={openRef} className="w-max max-h-[min(70dvh,440px)] border border-transparent overflow-hidden p-1.5">
           {sections.map((s, idx) => {
             const code = s.code ?? String(idx + 1).padStart(2, "0");
             return (
               <div
                 key={s.id}
-                className="flex items-center gap-2.5 px-3 py-2 leading-none"
+                className="flex items-center gap-2.5 px-3.5 py-2 pr-4 leading-none"
               >
                 <span className="h-1.5 w-1.5 shrink-0" />
                 <span className="font-mission text-[10px] font-semibold tracking-[0.14em] tabular-nums shrink-0">
@@ -253,12 +266,11 @@ const ScrollProgress = ({
         <motion.div
           data-slot="scroll-progress-surface"
           className={cn(
-            "absolute bottom-0 left-1/2 -translate-x-1/2 overflow-hidden max-w-[calc(100vw-1.5rem)]",
-            "border border-white/15 bg-[linear-gradient(155deg,rgba(18,25,42,0.88),rgba(6,10,19,0.95))]",
-            "shadow-[0_18px_42px_-12px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.24)]",
-            "backdrop-blur-2xl transition-colors duration-200",
-            !open && "hover:border-white/25",
-            squircle
+            "isolate absolute bottom-0 left-1/2 -translate-x-1/2 overflow-hidden max-w-[calc(100vw-1.5rem)]",
+            "border border-white/14",
+            "shadow-[0_22px_50px_-12px_rgba(0,0,0,0.82)]",
+            "transition-colors duration-200",
+            !open && "hover:border-white/25"
           )}
           initial={false}
           animate={{
@@ -268,11 +280,21 @@ const ScrollProgress = ({
           }}
           transition={reduceMotion ? { duration: 0 } : SIZE_SPRING}
         >
+          <GlassSurface
+            layer
+            borderRadius={radius}
+            distortionScale={open ? -95 : -110}
+            displace={0.9}
+            blur={14}
+            backgroundOpacity={open ? 0.28 : 0.18}
+            tint="rgba(10, 15, 28, 0.48)"
+            saturation={1.4}
+          />
           <AnimatePresence initial={false} mode="popLayout">
             {open ? (
               <motion.ul
                 key="list"
-                className="absolute inset-0 flex flex-col p-1.5 max-h-[min(70dvh,440px)] overflow-y-auto"
+                className="absolute inset-0 z-10 flex flex-col p-1.5 max-h-[min(70dvh,440px)] overflow-y-auto overflow-x-hidden scrollbar-none"
                 initial={{
                   opacity: 0,
                   filter: reduceMotion ? undefined : "blur(4px)",
@@ -294,20 +316,16 @@ const ScrollProgress = ({
                         onClick={() => selectSection(s)}
                         aria-current={isActive ? "location" : undefined}
                         className={cn(
-                          "relative flex w-full items-center gap-2.5 rounded-[14px] px-3 py-2 text-left leading-none transition-colors cursor-pointer",
-                          squircle,
+                          "relative flex w-full items-center gap-2.5 rounded-[14px] px-3.5 py-2 pr-4 text-left leading-none transition-colors cursor-pointer",
                           isActive
                             ? "text-white"
-                            : "text-slate-400 hover:text-slate-100"
+                            : "text-slate-300/85 hover:text-white"
                         )}
                       >
                         {isActive && (
                           <motion.span
                             layoutId={`${layoutId}-active`}
-                            className={cn(
-                              "absolute inset-0 rounded-[14px] bg-white/[0.09] border border-cyan-glow/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.16)]",
-                              squircle
-                            )}
+                            className="liquid-glass-nav-capsule absolute inset-0 z-0 rounded-[14px]"
                             transition={
                               reduceMotion ? { duration: 0 } : SIZE_SPRING
                             }
@@ -315,7 +333,7 @@ const ScrollProgress = ({
                         )}
                         <motion.span
                           className={cn(
-                            "relative h-1.5 w-1.5 shrink-0 rounded-full",
+                            "relative z-10 h-1.5 w-1.5 shrink-0 rounded-full",
                             isActive
                               ? "bg-cyan-glow shadow-[0_0_8px_rgba(56,189,248,0.85)]"
                               : "bg-white/25"
@@ -334,8 +352,8 @@ const ScrollProgress = ({
                         />
                         <motion.span
                           className={cn(
-                            "relative shrink-0 font-mission text-[10px] font-semibold tracking-[0.14em] tabular-nums",
-                            isActive ? "text-mars-300" : "text-slate-500"
+                            "relative z-10 shrink-0 font-mission text-[10px] font-semibold tracking-[0.14em] tabular-nums",
+                            isActive ? "text-mars-300" : "text-slate-400"
                           )}
                           initial={
                             reduceMotion
@@ -352,7 +370,7 @@ const ScrollProgress = ({
                           {code}
                         </motion.span>
                         <motion.span
-                          className="relative whitespace-nowrap font-nav text-[13px] font-medium tracking-[0.01em]"
+                          className="relative z-10 whitespace-nowrap font-nav text-[13px] font-medium tracking-[0.01em]"
                           initial={
                             reduceMotion
                               ? undefined
@@ -379,7 +397,7 @@ const ScrollProgress = ({
                 onClick={() => setOpen(true)}
                 aria-label="Open section navigator"
                 aria-expanded={open}
-                className="group absolute inset-0 flex items-center gap-2.5 py-2 pl-2.5 pr-3.5 cursor-pointer"
+                className="group absolute inset-0 z-10 flex items-center gap-2.5 py-2 pl-2.5 pr-3.5 cursor-pointer"
                 initial={{
                   opacity: 0,
                   filter: reduceMotion ? undefined : "blur(4px)",

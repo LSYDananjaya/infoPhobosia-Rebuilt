@@ -16,12 +16,18 @@ function updateMaxScroll() {
   cachedProgress = Math.min(Math.max(window.scrollY / cachedMaxScroll, 0), 1);
 }
 
+let scrollRaf = 0;
+
 function handleScroll() {
-  scrollVersion += 1;
-  cachedProgress = Math.min(Math.max(window.scrollY / cachedMaxScroll, 0), 1);
-  for (const listener of listeners) {
-    listener(cachedProgress, scrollVersion);
-  }
+  if (scrollRaf) return;
+  scrollRaf = window.requestAnimationFrame(() => {
+    scrollRaf = 0;
+    scrollVersion += 1;
+    cachedProgress = Math.min(Math.max(window.scrollY / cachedMaxScroll, 0), 1);
+    for (const listener of listeners) {
+      listener(cachedProgress, scrollVersion);
+    }
+  });
 }
 
 function handleResize() {

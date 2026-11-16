@@ -6,6 +6,7 @@ import { interactionsData } from "@/data/interactionsData";
 import { Hand, Terminal, Monitor, Navigation, Compass, Layers, ShieldCheck, ArrowRight } from "lucide-react";
 import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
 import { LiquidGlassCard } from "@/components/ui/LiquidGlassCard";
+import { TelemetryScramble } from "@/components/ui/TelemetryScramble";
 import { PageTelemetryLayout } from "@/components/layout/PageTelemetryLayout";
 import type { RailTocItem } from "@/components/ui/RailToc";
 
@@ -57,9 +58,9 @@ export default function ExperiencePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Page Intro */}
         <div className="max-w-3xl mb-16">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mission uppercase tracking-wider bg-mars-500/10 border border-mars-500/20 text-mars-400 mb-4">
-            <Hand className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Interactive Systems Architecture</span>
+          <span className="telemetry-chip text-mars-300 mb-4">
+            <Hand className="w-3.5 h-3.5 text-mars-400" aria-hidden="true" />
+            <TelemetryScramble text="INTERACTIVE SYSTEMS ARCHITECTURE · 20+ CONSOLES" />
           </span>
           <h1 className="font-display text-4xl sm:text-5xl font-bold tracking-tight text-white">
             User Experience &amp; Interactions

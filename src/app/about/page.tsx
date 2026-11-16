@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Compass, Sparkles, Orbit, Target, Globe, BookOpen, Layers, ArrowRight } from "lucide-react";
 import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
 import { LiquidGlassCard } from "@/components/ui/LiquidGlassCard";
+import { TelemetryScramble } from "@/components/ui/TelemetryScramble";
 import { PageTelemetryLayout } from "@/components/layout/PageTelemetryLayout";
 import type { RailTocItem } from "@/components/ui/RailToc";
 
@@ -27,9 +28,9 @@ export default function AboutPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Page Header */}
         <div className="max-w-3xl mb-16">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mission uppercase tracking-wider bg-mars-500/10 border border-mars-500/20 text-mars-400 mb-4">
-            <Orbit className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Project Manifesto &amp; Architecture</span>
+          <span className="telemetry-chip text-mars-300 mb-4">
+            <Orbit className="w-3.5 h-3.5 text-mars-400" aria-hidden="true" />
+            <TelemetryScramble text="PROJECT MANIFESTO & ARCHITECTURE · ELYSIUM PLANITIA" />
           </span>
           <h1 className="font-display text-4xl sm:text-5xl font-bold tracking-tight text-white">
             About PHOBOSIA

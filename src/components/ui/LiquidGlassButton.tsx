@@ -1,5 +1,8 @@
-import React from "react";
+"use client";
+
+import React, { useRef } from "react";
 import Link from "next/link";
+import { GlassSurface } from "@/components/ui/GlassSurface";
 
 export type LiquidGlassButtonVariant = "primary" | "glass" | "mars" | "cyan";
 export type LiquidGlassButtonSize = "sm" | "md" | "lg" | "icon";
@@ -9,6 +12,7 @@ interface BaseProps {
   variant?: LiquidGlassButtonVariant;
   size?: LiquidGlassButtonSize;
   fullWidth?: boolean;
+  magnetic?: boolean;
   wrapClassName?: string;
   className?: string;
   contentClassName?: string;
@@ -48,11 +52,30 @@ export function LiquidGlassButton(props: LiquidGlassButtonProps) {
     variant = "glass",
     size = "md",
     fullWidth = false,
+    magnetic = true,
     wrapClassName = "",
     className = "",
     contentClassName = "",
     ...rest
   } = props;
+
+  const wrapRef = useRef<HTMLSpanElement>(null);
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLSpanElement>) => {
+    if (!magnetic || e.pointerType === "touch") return;
+    const el = wrapRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const dx = ((e.clientX - (r.left + r.width * 0.5)) / (r.width * 0.5)) * 3.5;
+    const dy = ((e.clientY - (r.top + r.height * 0.5)) / (r.height * 0.5)) * 2.5;
+    el.style.transform = `translate3d(${dx.toFixed(1)}px, ${dy.toFixed(1)}px, 0)`;
+  };
+
+  const handlePointerLeave = () => {
+    const el = wrapRef.current;
+    if (!el) return;
+    el.style.transform = "";
+  };
 
   const wrapClasses = [
     "lg-btn-wrap",
@@ -76,7 +99,19 @@ export function LiquidGlassButton(props: LiquidGlassButtonProps) {
     .filter(Boolean)
     .join(" ");
 
-  const innerContent = <span className={contentClasses}>{children}</span>;
+  const innerContent = (
+    <>
+      <GlassSurface
+        layer
+        distortionScale={variant === "primary" ? -35 : -70}
+        displace={0.8}
+        blur={12}
+        backgroundOpacity={0.05}
+        saturation={1.35}
+      />
+      <span className={contentClasses}>{children}</span>
+    </>
+  );
 
   let control: React.ReactNode;
 
@@ -124,9 +159,13 @@ export function LiquidGlassButton(props: LiquidGlassButtonProps) {
   }
 
   return (
-    <span className={wrapClasses}>
+    <span
+      ref={wrapRef}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+      className={wrapClasses}
+    >
       {control}
-      <span className="lg-btn-shadow" aria-hidden="true" />
     </span>
   );
 }

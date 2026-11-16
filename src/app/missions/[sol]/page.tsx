@@ -65,7 +65,10 @@ export default async function SolDetailPage({ params }: Props) {
         </nav>
 
         {/* Header Section */}
-        <div className="space-y-4 mb-12">
+        <div
+          style={{ viewTransitionName: `sol-card-${mission.sol}` } as React.CSSProperties}
+          className="space-y-4 mb-12"
+        >
           <div className="flex flex-wrap items-center gap-3">
             <span className="px-3 py-1 rounded-lg text-sm font-mission bg-mars-500/20 text-mars-300 border border-mars-500/40">
               SOL {mission.sol < 10 ? `0${mission.sol}` : mission.sol}

@@ -4,6 +4,7 @@ import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { OutpostBootLoader } from "@/components/layout/OutpostBootLoader";
+import { RouteAtmosphere } from "@/components/layout/RouteAtmosphere";
 import { SmoothScrollProvider } from "@/components/scenes/SmoothScrollProvider";
 import { TacticalMarsCursor } from "@/components/ui/TacticalMarsCursor";
 
@@ -101,11 +102,12 @@ export default function RootLayout({
         >
           Skip to main content
         </a>
+        <RouteAtmosphere />
         <TacticalMarsCursor />
         <OutpostBootLoader />
         <Navbar />
         <SmoothScrollProvider>
-          <main id="main-content" className="flex-grow">
+          <main id="main-content" className="relative z-10 flex-grow">
             {children}
           </main>
           <Footer />

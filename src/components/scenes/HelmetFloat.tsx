@@ -91,7 +91,7 @@ export function HelmetFloat() {
     <div
       ref={root}
       aria-hidden="true"
-      className="absolute top-6 sm:top-10 right-[4%] lg:right-[8%] w-[clamp(140px,18vw,244px)] hidden md:block pointer-events-none"
+      className="absolute top-4 sm:top-10 right-[3%] lg:right-[8%] w-[clamp(104px,26vw,244px)] block opacity-80 md:opacity-100 pointer-events-none"
     >
       <span className="absolute inset-[-28%] rounded-full bg-mars-500/18 blur-3xl" />
       <svg

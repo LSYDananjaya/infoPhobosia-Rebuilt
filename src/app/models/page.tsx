@@ -7,6 +7,7 @@ import { Layers, Maximize2, ArrowRight, Moon, Sparkles, Radio, Eye } from "lucid
 import { Modal } from "@/components/ui/Modal";
 import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
 import { LiquidGlassCard } from "@/components/ui/LiquidGlassCard";
+import { TelemetryScramble } from "@/components/ui/TelemetryScramble";
 import { PageTelemetryLayout } from "@/components/layout/PageTelemetryLayout";
 import type { RailTocItem } from "@/components/ui/RailToc";
 import { handleTabListKeyDown, readQueryParam, syncQueryParams } from "@/lib/uiHelpers";
@@ -68,9 +69,9 @@ export default function ModelsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Page Header */}
         <div className="max-w-3xl mb-12">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mission uppercase tracking-wider bg-mars-500/10 border border-mars-500/20 text-mars-400 mb-4">
-            <Layers className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Handmade 3D Assets &amp; Environments</span>
+          <span className="telemetry-chip text-mars-300 mb-4">
+            <Layers className="w-3.5 h-3.5 text-mars-400" aria-hidden="true" />
+            <TelemetryScramble text="HANDMADE 3D ASSETS & ENVIRONMENTS · DRACO GLB" />
           </span>
           <h1 className="font-display text-4xl sm:text-5xl font-bold tracking-tight text-white">
             3D Outpost Architecture
