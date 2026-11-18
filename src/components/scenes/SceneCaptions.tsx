@@ -38,7 +38,7 @@ export function SceneCaptions({
           <div
             key={beat.title}
             data-beat={i}
-            className="scene-beat scene-hud-card max-w-xl rounded-2xl px-5 py-4 sm:px-6 sm:py-5 space-y-2.5"
+            className="scene-beat scene-hud-card max-w-xl rounded-2xl px-4 py-3.5 sm:px-6 sm:py-5 space-y-2 sm:space-y-2.5"
           >
             {/* Corner reticle ticks */}
             <span className="scene-hud-corner scene-hud-corner--tl" aria-hidden="true" />
@@ -133,17 +133,17 @@ export function SceneProgress({
           </span>
         </div>
 
-        <div className="hidden sm:flex items-center gap-5 text-xs tabular-nums">
+        <div className="flex items-center gap-3 sm:gap-5 text-[11px] sm:text-xs tabular-nums">
           <div>
-            <span data-telemetry-primary-label className="text-slate-500 mr-1.5">
+            <span data-telemetry-primary-label className="hidden sm:inline text-slate-500 mr-1.5">
               {primaryLabel}
             </span>
             <span data-telemetry-primary className="text-mars-300">
               {primaryInitial}
             </span>
           </div>
-          <span className="h-3 w-px bg-white/15" />
-          <div>
+          <span className="hidden md:inline-block h-3 w-px bg-white/15" />
+          <div className="hidden md:block">
             <span data-telemetry-secondary-label className="text-slate-500 mr-1.5">
               {secondaryLabel}
             </span>

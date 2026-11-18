@@ -10,7 +10,7 @@ export function LaunchHorizonCTA() {
     <section
       id="launch-horizon"
       aria-labelledby="launch-horizon-heading"
-      className="relative py-24 sm:py-32 bg-space-950 overflow-hidden"
+      className="relative pt-20 pb-36 sm:py-32 bg-space-950 overflow-hidden"
     >
       <div
         aria-hidden="true"

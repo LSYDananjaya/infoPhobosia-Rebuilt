@@ -54,7 +54,7 @@ export function SurfaceArrivalStage() {
       {/* Far ridge: two desaturated outcrops on the horizon */}
       <div
         data-layer="ridge"
-        className="scene-layer absolute inset-x-[-4%] bottom-[24%] pointer-events-none"
+        className="scene-layer absolute inset-x-[-4%] bottom-[34%] sm:bottom-[24%] pointer-events-none"
       >
         <div data-depth="0.16" className="scene-layer flex items-end justify-between opacity-75">
           <div className="w-[44%] max-w-[580px]">
@@ -75,7 +75,7 @@ export function SurfaceArrivalStage() {
 
       {/* Martian ground plane with feathered horizon blend */}
       <div
-        className="absolute inset-x-0 bottom-0 h-[34%] bg-[linear-gradient(180deg,transparent_0%,rgba(90,39,21,0.75)_18%,#3a190e_52%,#090608_100%)]"
+        className="absolute inset-x-0 bottom-0 h-[42%] sm:h-[34%] bg-[linear-gradient(180deg,transparent_0%,rgba(90,39,21,0.75)_18%,#3a190e_52%,#090608_100%)]"
       />
 
       {/* Drifting atmospheric dust motes */}
@@ -89,7 +89,7 @@ export function SurfaceArrivalStage() {
         asset={sceneAssets.habitatModule}
         layer="habitat"
         depth={0.4}
-        className="absolute bottom-[19%] right-[4%] md:right-[8%] w-[clamp(280px,48vw,740px)]"
+        className="absolute bottom-[34%] sm:bottom-[19%] right-[2%] md:right-[8%] w-[clamp(250px,68vw,740px)]"
         filter="brightness(0.94) saturate(1.06)"
         rimGlow="mars"
         glint
@@ -103,7 +103,7 @@ export function SurfaceArrivalStage() {
         asset={sceneAssets.marsRover}
         layer="rover"
         depth={0.72}
-        className="absolute bottom-[6%] left-[3%] md:left-[7%] w-[clamp(210px,36vw,600px)] z-[3]"
+        className="absolute bottom-[25%] sm:bottom-[6%] left-[2%] md:left-[7%] w-[clamp(195px,54vw,600px)] z-[3]"
         rimGlow="amber"
         shadow
       >
@@ -115,7 +115,7 @@ export function SurfaceArrivalStage() {
         asset={sceneAssets.explorationDrone}
         layer="drone"
         depth={0.96}
-        className="absolute top-[26%] md:top-[16%] right-[8%] md:right-[13%] w-[clamp(160px,26vw,440px)] z-[4]"
+        className="absolute top-[16%] right-[4%] md:right-[13%] w-[clamp(150px,42vw,440px)] z-[4]"
         rimGlow="cyan"
       >
         <span data-layer="scan-cone" className="drone-scan-cone" />

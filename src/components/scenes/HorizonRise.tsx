@@ -21,30 +21,30 @@ export function HorizonRise() {
           scrollTrigger: {
             trigger: section,
             start: "top bottom",
-            end: "center 52%",
-            scrub: 1.15,
+            end: "bottom 75%",
+            scrub: 0.85,
           },
         });
 
         tl.fromTo(
           "[data-layer=cta-horizon-glow]",
-          { yPercent: 35, scale: 0.85, opacity: 0.2 },
-          { yPercent: 0, scale: 1.08, opacity: 0.9, duration: 1 },
+          { yPercent: 40, scale: 0.82, opacity: 0.2 },
+          { yPercent: 0, scale: 1.12, opacity: 0.95, duration: 1 },
           0
         )
-          .fromTo("[data-layer=horizon-back]", { yPercent: 48 }, { yPercent: 0, duration: 1 }, 0)
-          .fromTo("[data-layer=horizon-front]", { yPercent: 85 }, { yPercent: 0, duration: 1 }, 0)
+          .fromTo("[data-layer=horizon-back]", { yPercent: 56 }, { yPercent: 0, duration: 1 }, 0)
+          .fromTo("[data-layer=horizon-front]", { yPercent: 92 }, { yPercent: 0, duration: 1 }, 0)
           .fromTo(
             "[data-layer=astronaut]",
-            { yPercent: 36, scale: 0.92, autoAlpha: 0 },
+            { yPercent: 48, scale: 0.88, autoAlpha: 0 },
             { yPercent: 0, scale: 1, autoAlpha: 1, duration: 0.78, ease: "power2.out" },
-            0.22
+            0.18
           )
           .fromTo(
             "[data-layer=astronaut] [data-glint]",
             { xPercent: 0 },
             { xPercent: 330, duration: 0.35, ease: "power1.inOut" },
-            0.62
+            0.58
           );
 
         const idle = gsap.to("[data-layer=astronaut] [data-inner]", {
@@ -82,7 +82,7 @@ export function HorizonRise() {
         asset={sceneAssets.astronaut}
         layer="astronaut"
         depth={0.78}
-        className="absolute bottom-[2%] right-[1%] lg:right-[2%] xl:right-[5%] 2xl:right-[8%] w-[clamp(112px,26vw,255px)] block opacity-85 lg:opacity-100 z-[2]"
+        className="absolute bottom-[1%] right-[3%] lg:right-[2%] xl:right-[5%] 2xl:right-[8%] w-[clamp(136px,36vw,255px)] block opacity-95 lg:opacity-100 z-[2]"
         filter="brightness(0.94)"
         rimGlow="mars"
         glint

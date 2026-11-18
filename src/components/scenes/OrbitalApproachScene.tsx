@@ -50,10 +50,15 @@ export function OrbitalApproachScene() {
       mm.add(
         {
           desktop: "(min-width: 768px)",
+          mobile: "(max-width: 767px)",
           reduce: "(prefers-reduced-motion: reduce)",
         },
         (ctx) => {
-          const { desktop, reduce } = ctx.conditions as { desktop: boolean; reduce: boolean };
+          const { desktop, reduce } = ctx.conditions as {
+            desktop: boolean;
+            mobile: boolean;
+            reduce: boolean;
+          };
           if (reduce) return;
 
           // Idle loops on inner wrappers, paused while off-screen
@@ -114,8 +119,8 @@ export function OrbitalApproachScene() {
             scrollTrigger: {
               trigger: root.current,
               start: "top top",
-              end: desktop ? "+=450%" : "+=310%",
-              scrub: 1.15,
+              end: desktop ? "+=450%" : "+=340%",
+              scrub: desktop ? 1.15 : 0.7,
               pin: "[data-pin]",
               anticipatePin: 1,
               invalidateOnRefresh: true,
@@ -175,14 +180,14 @@ export function OrbitalApproachScene() {
             .fromTo(
               "[data-layer=mars]",
               {
-                scale: desktop ? 0.54 : 0.66,
+                scale: desktop ? 0.54 : 0.72,
                 xPercent: desktop ? 10 : 4,
-                yPercent: 38,
+                yPercent: desktop ? 38 : 20,
               },
               {
-                scale: desktop ? 1.28 : 1.22,
+                scale: desktop ? 1.28 : 1.26,
                 xPercent: 0,
-                yPercent: 4,
+                yPercent: desktop ? 4 : -10,
                 duration: 0.28,
                 ease: "power1.inOut",
               },
@@ -191,9 +196,9 @@ export function OrbitalApproachScene() {
             .to(
               "[data-layer=mars]",
               {
-                scale: desktop ? 2.45 : 2.05,
+                scale: desktop ? 2.45 : 2.15,
                 xPercent: 0,
-                yPercent: 52,
+                yPercent: desktop ? 52 : 38,
                 duration: 0.26,
                 ease: "power2.inOut",
               },
@@ -287,11 +292,11 @@ export function OrbitalApproachScene() {
               { autoAlpha: 1, duration: 0.1, ease: "power2.inOut" },
               0.45
             )
-            // Glide the HUD caption deck smoothly from lower-left to upper-left for Surface stage
+            // Glide the HUD caption deck smoothly from lower-left to upper-left on desktop, while keeping lower-viewport framing on mobile so sprites stay unobstructed
             .fromTo(
               "[data-layer=caption-deck]",
               { y: "0vh" },
-              { y: desktop ? "-44vh" : "-38vh", duration: 0.1, ease: "power2.inOut" },
+              { y: desktop ? "-44vh" : "-2vh", duration: 0.1, ease: "power2.inOut" },
               0.45
             );
 

@@ -45,13 +45,14 @@ export function setupPointerParallax(container: HTMLElement | null, maxShift = 2
   let scrollProgress = 0.5;
 
   const applyTargets = () => {
-    const mobileScale = canHover ? 0.45 : 1.0;
-    const yScrollFactor = (scrollProgress - 0.5) * maxShift * 1.35 * mobileScale;
-    const xScrollFactor = Math.sin(scrollProgress * Math.PI * 2) * (maxShift * 0.35) * mobileScale;
+    const mobileScale = canHover ? 0.55 : 1.0;
+    const yScrollFactor = (scrollProgress - 0.5) * maxShift * 2.35 * mobileScale;
+    const xScrollFactor = Math.sin(scrollProgress * Math.PI * 2) * (maxShift * 0.65) * mobileScale;
+    const rotScrollFactor = (scrollProgress - 0.5) * 2.8 * mobileScale;
     for (const t of targets) {
       t.xTo((-pointerX * maxShift + xScrollFactor) * t.depth);
       t.yTo((-pointerY * (maxShift * 0.7) + yScrollFactor) * t.depth);
-      t.rTo((pointerX * 1.15 + (scrollProgress - 0.5) * 1.4) * t.depth);
+      t.rTo((pointerX * 1.15 + rotScrollFactor) * t.depth);
     }
   };
 
@@ -78,7 +79,7 @@ export function setupPointerParallax(container: HTMLElement | null, maxShift = 2
   });
 
   const onMove = (e: PointerEvent) => {
-    if (!active) return;
+    if (!active || e.pointerType === "touch") return;
     pointerX = (e.clientX / window.innerWidth - 0.5) * 2; // -1 .. 1
     pointerY = (e.clientY / window.innerHeight - 0.5) * 2; // -1 .. 1
     applyTargets();
@@ -86,16 +87,26 @@ export function setupPointerParallax(container: HTMLElement | null, maxShift = 2
 
   const onTouchMove = (e: TouchEvent) => {
     if (!active || !e.touches[0]) return;
-    pointerX = (e.touches[0].clientX / window.innerWidth - 0.5) * 2;
-    pointerY = (e.touches[0].clientY / window.innerHeight - 0.5) * 2;
+    pointerX = (e.touches[0].clientX / window.innerWidth - 0.5) * 1.1;
+    pointerY = (e.touches[0].clientY / window.innerHeight - 0.5) * 1.1;
     applyTargets();
+  };
+
+  const onTouchEnd = () => {
+    pointerX = 0;
+    pointerY = 0;
+    if (active) applyTargets();
   };
 
   window.addEventListener("pointermove", onMove, { passive: true });
   window.addEventListener("touchmove", onTouchMove, { passive: true });
+  window.addEventListener("touchend", onTouchEnd, { passive: true });
+  window.addEventListener("touchcancel", onTouchEnd, { passive: true });
   return () => {
     window.removeEventListener("pointermove", onMove);
     window.removeEventListener("touchmove", onTouchMove);
+    window.removeEventListener("touchend", onTouchEnd);
+    window.removeEventListener("touchcancel", onTouchEnd);
     st.kill();
   };
 }

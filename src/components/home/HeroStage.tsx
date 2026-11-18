@@ -13,6 +13,7 @@ import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
 import { TelemetryScramble, AnimatedCounter } from "@/components/ui/TelemetryScramble";
 import { sceneAssets } from "@/data/sceneAssets";
 import { SpriteImg } from "@/components/scenes/SceneSprite";
+import { gsap, useGSAP } from "@/lib/gsap";
 
 export function HeroStage() {
   const heroRef = useRef<HTMLElement>(null);
@@ -104,32 +105,52 @@ export function HeroStage() {
       setLmst(`${pad(h)}:${pad(m)}:${pad(s)}`);
     }, 1000);
 
-    // Scroll-linked parallax for the hero planetary orb across both mobile and desktop
-    let scrollRaf = 0;
-    const onScroll = () => {
-      if (scrollRaf || mq.matches || !isInViewRef.current) return;
-      scrollRaf = window.requestAnimationFrame(() => {
-        scrollRaf = 0;
-        const orb = orbRef.current;
-        const hero = heroRef.current;
-        if (!orb || !hero) return;
-        const progress = Math.min(Math.max(-hero.getBoundingClientRect().top / Math.max(hero.offsetHeight, 1), 0), 1);
-        orb.style.transform = `translate3d(${(progress * -18).toFixed(1)}px, ${(progress * 42).toFixed(1)}px, 0) rotate(${(progress * 6).toFixed(2)}deg) scale(${(1 + progress * 0.08).toFixed(3)})`;
-      });
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-
     return () => {
       mq.removeEventListener("change", onChange);
       observer?.disconnect();
       window.clearInterval(clockTimer);
-      window.removeEventListener("scroll", onScroll);
-      if (scrollRaf) window.cancelAnimationFrame(scrollRaf);
     };
   }, [attemptAutoplay]);
 
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        const tl = gsap.timeline({
+          defaults: { ease: "none" },
+          scrollTrigger: {
+            trigger: heroRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: 0.65,
+          },
+        });
+
+        tl.fromTo(
+          "[data-hero-orb-scroll]",
+          { y: 0, x: 0, scale: 1, rotate: 0 },
+          { y: 74, x: -20, scale: 1.12, rotate: 9, duration: 1 },
+          0
+        )
+          .fromTo(
+            "[data-hero-orbit]",
+            { rotate: 0, scale: 1 },
+            { rotate: 24, scale: 1.06, duration: 1 },
+            0
+          )
+          .fromTo(
+            "[data-hero-glow]",
+            { y: 0, scale: 1, opacity: 0.85 },
+            { y: -56, scale: 1.18, opacity: 1, duration: 1 },
+            0
+          );
+      });
+    },
+    { scope: heroRef }
+  );
+
   const handleHeroPointerMove = (e: React.PointerEvent<HTMLElement>) => {
-    if (reducedMotion) return;
+    if (reducedMotion || e.pointerType === "touch") return;
     const section = heroRef.current;
     const orb = orbRef.current;
     if (!section || !orb) return;
@@ -218,17 +239,19 @@ export function HeroStage() {
       {/* Interactive 3D Planetary Fresnel Orb & Orbital Telemetry Overlay (Right Viewport) */}
       <div
         aria-hidden="true"
-        className="flex absolute right-[-12%] sm:right-[2%] lg:right-[5%] xl:right-[7%] top-[16%] sm:top-[22%] lg:top-1/2 lg:-translate-y-1/2 w-[220px] sm:w-[270px] lg:w-[310px] xl:w-[370px] opacity-55 sm:opacity-75 lg:opacity-100 aspect-square items-center justify-center pointer-events-none z-[5]"
+        className="flex absolute right-[-6%] sm:right-[2%] lg:right-[5%] xl:right-[7%] top-[15%] sm:top-[22%] lg:top-1/2 lg:-translate-y-1/2 w-[235px] sm:w-[270px] lg:w-[310px] xl:w-[370px] opacity-75 sm:opacity-85 lg:opacity-100 aspect-square items-center justify-center pointer-events-none z-[5]"
       >
-        <div
-          ref={orbRef}
-          className="relative w-full h-full transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]"
-        >
-          <span className="mars-halo opacity-85" />
-          <svg
-            viewBox="0 0 420 420"
-            className="absolute inset-[-22%] w-[144%] h-[144%] overflow-visible"
+        <div data-hero-orb-scroll className="scene-layer relative w-full h-full">
+          <div
+            ref={orbRef}
+            className="relative w-full h-full transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]"
           >
+            <span className="mars-halo opacity-85" />
+            <svg
+              data-hero-orbit
+              viewBox="0 0 420 420"
+              className="scene-layer absolute inset-[-22%] w-[144%] h-[144%] overflow-visible"
+            >
             <defs>
               <linearGradient id="hero-orbit-grad" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="rgba(56,189,248,0)" />
@@ -270,17 +293,19 @@ export function HeroStage() {
             <span className="mars-terminator" />
           </div>
 
-          <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 telemetry-chip text-cyan-200 whitespace-nowrap">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
-            <span>ORBIT LOCK · 4.5°N 135.9°E · {lmst} LMST</span>
+            <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 telemetry-chip text-cyan-200 whitespace-nowrap">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
+              <span>ORBIT LOCK · 4.5°N 135.9°E · {lmst} LMST</span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Subtle horizon atmospheric glow */}
       <div
+        data-hero-glow
         aria-hidden="true"
-        className="absolute -bottom-24 left-1/4 w-[520px] h-[360px] rounded-full bg-mars-500/14 blur-[140px] pointer-events-none"
+        className="scene-layer absolute -bottom-24 left-1/4 w-[520px] h-[360px] rounded-full bg-mars-500/14 blur-[140px] pointer-events-none"
       />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-1 flex flex-col justify-between">

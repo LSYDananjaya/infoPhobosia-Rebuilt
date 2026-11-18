@@ -18,33 +18,33 @@ export function HelmetFloat() {
       mm.add("(prefers-reduced-motion: no-preference)", () => {
         gsap.fromTo(
           "[data-layer=helmet]",
-          { y: 95, rotate: -12, scale: 0.92 },
+          { y: 110, rotate: -16, scale: 0.88 },
           {
-            y: -85,
-            rotate: 8,
-            scale: 1.04,
+            y: -95,
+            rotate: 12,
+            scale: 1.08,
             ease: "none",
             scrollTrigger: {
               trigger: section,
               start: "top bottom",
-              end: "bottom top",
-              scrub: 1.15,
+              end: "top -45%",
+              scrub: 0.85,
             },
           }
         );
 
         gsap.fromTo(
           "[data-layer=helmet-ring]",
-          { rotate: -40, scale: 0.9 },
+          { rotate: -55, scale: 0.86 },
           {
-            rotate: 45,
-            scale: 1.08,
+            rotate: 65,
+            scale: 1.12,
             ease: "none",
             scrollTrigger: {
               trigger: section,
               start: "top bottom",
-              end: "bottom top",
-              scrub: 1.2,
+              end: "top -45%",
+              scrub: 0.9,
             },
           }
         );
@@ -58,7 +58,7 @@ export function HelmetFloat() {
             ease: "power2.inOut",
             scrollTrigger: {
               trigger: section,
-              start: "top 68%",
+              start: "top 75%",
               toggleActions: "play none none reverse",
             },
           }
@@ -91,7 +91,7 @@ export function HelmetFloat() {
     <div
       ref={root}
       aria-hidden="true"
-      className="absolute top-4 sm:top-10 right-[3%] lg:right-[8%] w-[clamp(104px,26vw,244px)] block opacity-80 md:opacity-100 pointer-events-none"
+      className="absolute top-3 sm:top-10 right-[2%] lg:right-[8%] w-[clamp(118px,30vw,244px)] block opacity-90 md:opacity-100 pointer-events-none"
     >
       <span className="absolute inset-[-28%] rounded-full bg-mars-500/18 blur-3xl" />
       <svg

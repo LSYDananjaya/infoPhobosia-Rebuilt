@@ -11,36 +11,100 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Atom,
+  ArrowUpRight,
+  Box,
   ChevronDown,
   ChevronRight,
-  Menu,
-  X,
-  ArrowUpRight,
   Compass,
+  Home,
+  Info,
+  Layers,
+  Orbit,
+  Rocket,
   Sparkles,
   User,
-  Layers,
 } from "lucide-react";
 import { GlassSurface } from "@/components/ui/GlassSurface";
 import { LiquidGlassButton } from "@/components/ui/LiquidGlassButton";
 
 const primaryLinks = [
-  { href: "/", label: "Home" },
-  { href: "/missions", label: "Missions" },
-  { href: "/models", label: "3D Models" },
-  { href: "/science", label: "Science" },
-  { href: "/experience", label: "Experience" },
-  { href: "/about", label: "About" },
+  {
+    href: "/",
+    label: "Home",
+    index: "01",
+    tagline: "Where Mars observation begins.",
+    Icon: Home,
+  },
+  {
+    href: "/missions",
+    label: "Missions",
+    index: "02",
+    tagline: "SOL 1 to 11 surface operations.",
+    Icon: Orbit,
+  },
+  {
+    href: "/models",
+    label: "3D Models",
+    index: "03",
+    tagline: "Interactive outpost & rover assets.",
+    Icon: Box,
+  },
+  {
+    href: "/science",
+    label: "Science",
+    index: "04",
+    tagline: "NASA HiRISE DTM & terrain data.",
+    Icon: Atom,
+  },
+  {
+    href: "/experience",
+    label: "Experience",
+    index: "05",
+    tagline: "Real-time WebGL console systems.",
+    Icon: Rocket,
+  },
+  {
+    href: "/about",
+    label: "About",
+    index: "06",
+    tagline: "Crafted with quiet intent.",
+    Icon: Info,
+  },
 ];
 
 const archiveLinks = [
-  { href: "/development", label: "Development", Icon: Compass },
-  { href: "/story", label: "Astronaut Lore", Icon: Sparkles },
-  { href: "/creator", label: "Creator", Icon: User },
-  { href: "/credits", label: "Asset Credits", Icon: Layers },
+  {
+    href: "/development",
+    label: "Development",
+    index: "07",
+    tagline: "Engineering & WebGL architecture.",
+    Icon: Compass,
+  },
+  {
+    href: "/story",
+    label: "Astronaut Lore",
+    index: "08",
+    tagline: "Expedition logs of Carl Ashwindu.",
+    Icon: Sparkles,
+  },
+  {
+    href: "/creator",
+    label: "Creator",
+    index: "09",
+    tagline: "Built by Osanda Hirushaka.",
+    Icon: User,
+  },
+  {
+    href: "/credits",
+    label: "Asset Credits",
+    index: "10",
+    tagline: "CC BY 4.0 models & planetary sources.",
+    Icon: Layers,
+  },
 ];
 
-const allLinks = [...primaryLinks, ...archiveLinks.map(({ href, label }) => ({ href, label }))];
+const allLinks = [...primaryLinks, ...archiveLinks];
 
 type PanelPhase = "closed" | "opening" | "open" | "closing";
 
@@ -50,7 +114,11 @@ const useIsomorphicLayoutEffect =
 export function Navbar() {
   const pathname = usePathname();
 
-  const [mobilePhase, setMobilePhase] = useState<PanelPhase>("closed");
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [previewMeta, setPreviewMeta] = useState<{
+    index: string;
+    tagline: string;
+  } | null>(null);
   const [dropdownPhase, setDropdownPhase] = useState<PanelPhase>("closed");
   const [scrolled, setScrolled] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -58,7 +126,7 @@ export function Navbar() {
   // Optimistic pending key so clicking a tab begins gliding immediately
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [isGliding, setIsGliding] = useState(false);
-  const [glide, setGlide] = useState({ sx: 1.08, sy: 0.95 });
+  const [glide, setGlide] = useState({ sx: 1.1, sy: 1.5 });
   const prevLeftRef = useRef(-1);
   const [isCapsulePressed, setIsCapsulePressed] = useState(false);
   const [indicatorReady, setIndicatorReady] = useState(false);
@@ -82,26 +150,16 @@ export function Navbar() {
   const dossierButtonRef = useRef<HTMLButtonElement>(null);
   const dropdownPanelRef = useRef<HTMLDivElement>(null);
   const dropdownRectRef = useRef<DOMRect | null>(null);
-  const menuButtonRef = useRef<HTMLDivElement>(null);
   const menuItemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
-  const mobileSheetRef = useRef<HTMLDivElement>(null);
-  const mobileListRef = useRef<HTMLElement>(null);
-  const mobileRowRefs = useRef<(HTMLAnchorElement | null)[]>([]);
-  const [mobileLens, setMobileLens] = useState({
-    top: 0,
-    height: 0,
-    visible: false,
-    moving: false,
-  });
-  const mobileLensTimerRef = useRef<number | null>(null);
+  const mobilePanelRef = useRef<HTMLElement>(null);
+  const mobileToggleBtnRef = useRef<HTMLButtonElement>(null);
+  const mobileInnerRef = useRef<HTMLDivElement>(null);
 
   const prevActiveKeyRef = useRef<string | null>(null);
   const glideTimerRef = useRef<number | null>(null);
   const pendingTimerRef = useRef<number | null>(null);
   const dropdownTimerRef = useRef<number | null>(null);
   const dropdownRafRef = useRef<number | null>(null);
-  const mobileTimerRef = useRef<number | null>(null);
-  const mobileRafRef = useRef<number | null>(null);
 
   const [indicator, setIndicator] = useState<{
     left: number;
@@ -147,8 +205,12 @@ export function Navbar() {
   const activeKey = pendingKey ?? routeActiveKey;
   const archiveOpen = dropdownPhase === "opening" || dropdownPhase === "open";
   const archiveMounted = dropdownPhase !== "closed";
-  const mobileOpen = mobilePhase === "opening" || mobilePhase === "open";
-  const mobileMounted = mobilePhase !== "closed";
+
+  const activeMobileMeta =
+    allLinks.find((l) =>
+      l.href === "/" ? pathname === "/" : pathname.startsWith(l.href)
+    ) ?? primaryLinks[0];
+  const displayMeta = previewMeta ?? activeMobileMeta;
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -180,8 +242,8 @@ export function Navbar() {
     const dist = Math.abs(rect.left - prevLeftRef.current);
     if (prevLeftRef.current >= 0 && dist > 6) {
       setGlide({
-        sx: 1 + Math.min(0.24, dist / 640),
-        sy: 1 - Math.min(0.14, dist / 1300),
+        sx: 1.08 + Math.min(0.08, dist / 1400),
+        sy: 1.48 + Math.min(0.08, dist / 2200),
       });
     }
     prevLeftRef.current = rect.left;
@@ -271,55 +333,23 @@ export function Navbar() {
     }
   }, [dropdownPhase, openDropdown, closeDropdown]);
 
-  const openMobile = useCallback(() => {
-    if (mobileTimerRef.current) window.clearTimeout(mobileTimerRef.current);
-    if (mobileRafRef.current) window.cancelAnimationFrame(mobileRafRef.current);
-
-    if (reducedMotion) {
-      setMobilePhase("open");
-      return;
-    }
-
-    setMobilePhase("opening");
-    mobileRafRef.current = window.requestAnimationFrame(() => {
-      mobileRafRef.current = window.requestAnimationFrame(() => {
-        setMobilePhase("open");
-      });
-    });
-  }, [reducedMotion]);
-
-  const closeMobile = useCallback(
-    (returnFocus = false) => {
-      if (mobileTimerRef.current) window.clearTimeout(mobileTimerRef.current);
-      if (mobileRafRef.current) window.cancelAnimationFrame(mobileRafRef.current);
-
-      setMobilePhase((prev) => {
-        if (prev === "closed") return "closed";
-        if (reducedMotion) return "closed";
-        return "closing";
-      });
-
-      if (!reducedMotion) {
-        mobileTimerRef.current = window.setTimeout(() => {
-          setMobilePhase("closed");
-        }, 180);
-      }
-
-      if (returnFocus) {
-        const btn = menuButtonRef.current?.querySelector("button");
-        window.requestAnimationFrame(() => btn?.focus());
+  const setMobileMenuState = useCallback(
+    (open: boolean, returnFocus = false) => {
+      setMobileOpen(open);
+      if (!open) {
+        setPreviewMeta(null);
+        if (mobilePanelRef.current) {
+          mobilePanelRef.current.style.transform = "";
+        }
+        if (returnFocus) {
+          window.requestAnimationFrame(() => {
+            mobileToggleBtnRef.current?.focus();
+          });
+        }
       }
     },
-    [reducedMotion]
+    []
   );
-
-  const toggleMobile = useCallback(() => {
-    if (mobilePhase === "opening" || mobilePhase === "open") {
-      closeMobile(false);
-    } else {
-      openMobile();
-    }
-  }, [mobilePhase, openMobile, closeMobile]);
 
   const moveDropdownHighlight = useCallback((idx: number | null) => {
     setHoveredDropdownIdx(idx);
@@ -352,11 +382,11 @@ export function Navbar() {
   useEffect(() => {
     setPendingKey(null);
     if (pendingTimerRef.current) window.clearTimeout(pendingTimerRef.current);
-    closeMobile(false);
+    setMobileMenuState(false, false);
     closeDropdown(false);
-  }, [pathname, closeMobile, closeDropdown]);
+  }, [pathname, setMobileMenuState, closeDropdown]);
 
-  // Trigger brief physical glass droplet stretch when active tab changes
+  // Trigger optical lens droplet inflation & glide when active tab changes
   useEffect(() => {
     if (
       prevActiveKeyRef.current !== null &&
@@ -367,7 +397,7 @@ export function Navbar() {
       if (glideTimerRef.current) window.clearTimeout(glideTimerRef.current);
       glideTimerRef.current = window.setTimeout(() => {
         setIsGliding(false);
-      }, 220);
+      }, 360);
     }
     prevActiveKeyRef.current = activeKey;
   }, [activeKey, reducedMotion]);
@@ -406,7 +436,7 @@ export function Navbar() {
           closeDropdown(true);
         } else if (mobileOpen) {
           e.preventDefault();
-          closeMobile(true);
+          setMobileMenuState(false, true);
         }
       }
     };
@@ -419,15 +449,54 @@ export function Navbar() {
       ) {
         closeDropdown(false);
       }
+      if (
+        mobileOpen &&
+        mobilePanelRef.current &&
+        !mobilePanelRef.current.contains(e.target as Node)
+      ) {
+        setMobileMenuState(false, false);
+      }
+    };
+
+    const handleResize = () => {
+      if (mobileOpen && window.innerWidth >= 1024) {
+        setMobileMenuState(false, false);
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     document.addEventListener("pointerdown", handlePointerDownOutside);
+    window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("pointerdown", handlePointerDownOutside);
+      window.removeEventListener("resize", handleResize);
     };
-  }, [archiveOpen, mobileOpen, closeDropdown, closeMobile]);
+  }, [archiveOpen, mobileOpen, closeDropdown, setMobileMenuState]);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileOpen]);
+
+  // Size the open panel to its real content height (no dead space); CSS caps it to the viewport
+  useIsomorphicLayoutEffect(() => {
+    const inner = mobileInnerRef.current;
+    const panel = mobilePanelRef.current;
+    if (!inner || !panel || typeof ResizeObserver === "undefined") return;
+    const sync = () => {
+      panel.style.setProperty("--menu-open-h", `${Math.ceil(inner.offsetHeight)}px`);
+    };
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(inner);
+    document.fonts?.ready.then(sync).catch(() => {});
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -435,8 +504,6 @@ export function Navbar() {
       if (pendingTimerRef.current) window.clearTimeout(pendingTimerRef.current);
       if (dropdownTimerRef.current) window.clearTimeout(dropdownTimerRef.current);
       if (dropdownRafRef.current) window.cancelAnimationFrame(dropdownRafRef.current);
-      if (mobileTimerRef.current) window.clearTimeout(mobileTimerRef.current);
-      if (mobileRafRef.current) window.cancelAnimationFrame(mobileRafRef.current);
     };
   }, []);
 
@@ -538,94 +605,38 @@ export function Navbar() {
     closeDropdown(false);
   };
 
-  const mobileActiveIdx = allLinks.findIndex((l) =>
-    l.href === "/" ? pathname === "/" : pathname.startsWith(l.href)
-  );
-
-  const moveMobileLens = useCallback(
-    (idx: number | null) => {
-      const target = idx ?? (mobileActiveIdx >= 0 ? mobileActiveIdx : null);
-      const row = target === null ? null : mobileRowRefs.current[target];
-      if (!row) {
-        setMobileLens((prev) => (prev.visible ? { ...prev, visible: false } : prev));
-        return;
-      }
-      setMobileLens((prev) => {
-        if (prev.visible && prev.top === row.offsetTop) return prev;
-        return {
-          top: row.offsetTop,
-          height: row.offsetHeight,
-          visible: true,
-          moving: prev.visible && !reducedMotion,
-        };
-      });
-      if (mobileLensTimerRef.current) window.clearTimeout(mobileLensTimerRef.current);
-      mobileLensTimerRef.current = window.setTimeout(() => {
-        setMobileLens((prev) => (prev.moving ? { ...prev, moving: false } : prev));
-      }, 200);
-    },
-    [mobileActiveIdx, reducedMotion]
-  );
-
-  const handleMobilePointer = (e: React.PointerEvent<HTMLElement>) => {
-    const y = e.clientY;
-    const idx = mobileRowRefs.current.findIndex((row) => {
-      if (!row) return false;
-      const r = row.getBoundingClientRect();
-      return y >= r.top && y <= r.bottom;
-    });
-    if (idx >= 0) moveMobileLens(idx);
+  const handleMobilePanelPointerMove = (e: React.PointerEvent<HTMLElement>) => {
+    if (
+      !mobileOpen ||
+      reducedMotion ||
+      e.pointerType === "touch" ||
+      window.innerWidth < 768 ||
+      !mobilePanelRef.current
+    ) {
+      return;
+    }
+    const rect = mobilePanelRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    mobilePanelRef.current.style.transform = `perspective(1000px) rotateY(${(x * 3).toFixed(2)}deg) rotateX(${(-y * 3).toFixed(2)}deg)`;
   };
 
-  const handleMobileKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== "Tab") return;
-    const nodes = Array.from(
-      e.currentTarget.querySelectorAll<HTMLElement>("a[href], button:not([tabindex='-1'])")
-    );
-    if (nodes.length === 0) return;
-    const first = nodes[0];
-    const last = nodes[nodes.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
+  const handleMobilePanelPointerLeave = () => {
+    if (mobilePanelRef.current) {
+      mobilePanelRef.current.style.transform = "";
     }
   };
 
-  // Place the lens on the active row once the sheet is open; lock page scroll while mounted.
-  useEffect(() => {
-    if (mobilePhase !== "open") return;
-    const raf = window.requestAnimationFrame(() => {
-      setMobileLens((prev) => ({ ...prev, moving: false }));
-      moveMobileLens(null);
-      mobileRowRefs.current[Math.max(0, mobileActiveIdx)]?.focus({ preventScroll: true });
-    });
-    return () => window.cancelAnimationFrame(raf);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mobilePhase]);
-
-  useEffect(() => {
-    if (!mobileMounted) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-      setMobileLens({ top: 0, height: 0, visible: false, moving: false });
-    };
-  }, [mobileMounted]);
-
-  const transformSuffix = isGliding
-    ? ` scale(${glide.sx}, ${glide.sy})`
+  const bubbleTransform = isGliding
+    ? `scale(${glide.sx}, ${glide.sy})`
     : isCapsulePressed
-      ? " scale(1.1, 1.14)"
-      : " scale(1, 1)";
+      ? "scale(1.08, 1.38)"
+      : "scale(1, 1)";
 
   return (
     <>
-      <header className="fixed top-4 sm:top-5 left-0 right-0 z-50 px-4 sm:px-6 lg:px-8 pointer-events-none">
-        <div className="w-full max-w-7xl mx-auto flex items-center justify-between lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 sm:gap-4 lg:gap-6">
+      <header className="fixed top-4 sm:top-5 left-0 right-0 z-40 lg:z-50 px-4 sm:px-6 lg:px-8 pointer-events-none">
+        <div className="w-full max-w-7xl mx-auto flex items-center justify-between xl:grid xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 sm:gap-4 lg:gap-4 xl:gap-6">
           {/* Left Zone: Uncropped PHOBOSIA Wordmark */}
           <Link
             href="/"
@@ -638,11 +649,11 @@ export function Navbar() {
               width={1600}
               height={533}
               priority
-              className="h-9 sm:h-11 xl:h-[52px] w-auto object-contain object-left select-none drop-shadow-[0_2px_8px_rgba(4,7,14,0.75)]"
+              className="h-9 lg:h-10 xl:h-[52px] w-auto object-contain object-left select-none drop-shadow-[0_2px_8px_rgba(4,7,14,0.75)]"
             />
           </Link>
 
-          {/* Center Zone: Shared Non-Blurred Wrapper Decoupling Dropdown from Nav Backdrop Root */}
+          {/* Center Zone: Desktop Optical Glass Lens Tab Bar (lg+) */}
           <div
             ref={archiveContainerRef}
             onBlur={handleArchiveBlur}
@@ -660,7 +671,7 @@ export function Navbar() {
                 );
                 setIsCapsulePressed(false);
               }}
-              className={`flex items-center relative rounded-full liquid-glass-pill liquid-glass-pill--refract p-1.5 xl:p-2 gap-0.5 xl:gap-1 ${
+              className={`flex items-center relative overflow-visible rounded-full liquid-glass-pill liquid-glass-pill--refract p-1.5 xl:p-2 gap-0.5 xl:gap-1 ${
                 scrolled ? "liquid-glass-pill--scrolled" : ""
               } ${archiveOpen ? "liquid-glass-pill--dropdown-open" : ""}`}
             >
@@ -686,24 +697,34 @@ export function Navbar() {
                 }}
               />
 
-              {/* Shared gliding Active Liquid Glass Droplet Indicator */}
+              {/* Gliding Optical Magnifier Glass Droplet (bulges beyond track while moving) */}
               {indicator.visible && (
                 <span
                   aria-hidden="true"
-                  className={`absolute top-1.5 xl:top-2 bottom-1.5 xl:bottom-2 left-0 z-[3] rounded-full liquid-glass-nav-capsule pointer-events-none ${
-                    !indicatorReady ? "liquid-glass-nav-capsule--instant" : ""
-                  } ${isGliding ? "liquid-glass-nav-capsule--gliding" : ""} ${
-                    isCapsulePressed ? "liquid-glass-nav-capsule--pressed" : ""
+                  className={`absolute top-1.5 xl:top-2 bottom-1.5 xl:bottom-2 left-0 z-[6] pointer-events-none liquid-glass-nav-track-pos ${
+                    !indicatorReady ? "liquid-glass-nav-track-pos--instant" : ""
                   }`}
                   style={{
                     width: `${indicator.width}px`,
-                    transform: `translate3d(${indicator.left}px, 0, 0)${transformSuffix}`,
+                    transform: `translate3d(${indicator.left}px, 0, 0)`,
                   }}
-                />
+                >
+                  <span
+                    className={`block w-full h-full rounded-full liquid-glass-nav-capsule relative ${
+                      !indicatorReady ? "liquid-glass-nav-capsule--instant" : ""
+                    } ${isGliding ? "liquid-glass-nav-capsule--gliding" : ""} ${
+                      isCapsulePressed ? "liquid-glass-nav-capsule--pressed" : ""
+                    }`}
+                    style={{
+                      transform: bubbleTransform,
+                    }}
+                  />
+                </span>
               )}
 
               {primaryLinks.map((link) => {
                 const isActive = activeKey === link.href;
+                const TabIcon = link.Icon;
                 return (
                   <Link
                     key={link.href}
@@ -723,8 +744,13 @@ export function Navbar() {
                     }}
                     onPointerUp={() => setIsCapsulePressed(false)}
                     onPointerCancel={() => setIsCapsulePressed(false)}
-                    onClick={() => triggerTabClick(link.href)}
-                    className={`liquid-glass-tab-item relative z-10 px-3 xl:px-[18px] 2xl:px-[22px] py-2 rounded-full text-[13px] font-nav whitespace-nowrap min-h-[42px] xl:min-h-[44px] flex items-center select-none ${
+                    onClick={(e) => {
+                      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
+                        return;
+                      }
+                      triggerTabClick(link.href);
+                    }}
+                    className={`liquid-glass-tab-item group relative z-10 px-2.5 xl:px-4 2xl:px-5 py-2 rounded-full text-[12px] xl:text-[13px] font-nav whitespace-nowrap min-h-[40px] xl:min-h-[44px] inline-flex items-center gap-1.5 select-none ${
                       isActive
                         ? indicator.visible
                           ? "text-white liquid-glass-tab-item--active"
@@ -732,7 +758,16 @@ export function Navbar() {
                         : "text-slate-200/80 hover:text-white"
                     }`}
                   >
-                    {link.label}
+                    <TabIcon
+                      className={`w-3.5 h-3.5 shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                        isActive
+                          ? "scale-110 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.45)]"
+                          : "opacity-75 group-hover:opacity-100 group-hover:scale-105"
+                      }`}
+                      strokeWidth={isActive ? 2.15 : 1.75}
+                      aria-hidden="true"
+                    />
+                    <span>{link.label}</span>
                   </Link>
                 );
               })}
@@ -756,7 +791,7 @@ export function Navbar() {
                 aria-expanded={archiveOpen}
                 aria-haspopup="menu"
                 aria-controls="dossier-liquid-menu"
-                className={`liquid-glass-tab-item relative z-10 px-3 xl:px-[18px] 2xl:px-[22px] py-2 rounded-full text-[13px] font-nav whitespace-nowrap min-h-[42px] xl:min-h-[44px] inline-flex items-center gap-1.5 select-none ${
+                className={`liquid-glass-tab-item group relative z-10 px-2.5 xl:px-4 2xl:px-5 py-2 rounded-full text-[12px] xl:text-[13px] font-nav whitespace-nowrap min-h-[40px] xl:min-h-[44px] inline-flex items-center gap-1.5 select-none ${
                   activeKey === "__archive__"
                     ? indicator.visible
                       ? "text-white liquid-glass-tab-item--active"
@@ -766,6 +801,15 @@ export function Navbar() {
                       : "text-slate-200/80 hover:text-white"
                 }`}
               >
+                <Layers
+                  className={`w-3.5 h-3.5 shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                    activeKey === "__archive__"
+                      ? "scale-110 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.45)]"
+                      : "opacity-75 group-hover:opacity-100 group-hover:scale-105"
+                  }`}
+                  strokeWidth={activeKey === "__archive__" ? 2.15 : 1.75}
+                  aria-hidden="true"
+                />
                 <span>Dossier</span>
                 <ChevronDown
                   className={`w-3.5 h-3.5 transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${
@@ -837,7 +881,19 @@ export function Navbar() {
                           if (e.pointerType !== "touch") moveDropdownHighlight(idx);
                         }}
                         onFocus={() => moveDropdownHighlight(idx)}
-                        onClick={() => closeDropdown(false)}
+                        onClick={(e) => {
+                          if (
+                            !e.metaKey &&
+                            !e.ctrlKey &&
+                            !e.shiftKey &&
+                            !e.altKey &&
+                            e.button === 0
+                          ) {
+                            triggerTabClick("__archive__");
+                          } else {
+                            closeDropdown(false);
+                          }
+                        }}
                         className={`liquid-glass-dropdown-item relative z-10 group flex items-center justify-between px-3 py-2.5 rounded-2xl text-xs font-nav min-h-[42px] transition-[color,transform] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/80 ${
                           isSubActive
                             ? "text-white bg-white/10"
@@ -909,14 +965,20 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Right Zone: Detached Standalone Liquid Glass CTA Pill + Mobile Menu Toggle */}
-          <div className="justify-self-end flex items-center gap-1.5 sm:gap-2.5 shrink-0 pointer-events-auto">
+          {/* Right Zone: Tablet/Desktop HUD & Launch CTA (leaves space on sm–md for fixed top-right Menu pill) */}
+          <div
+            className={`justify-self-end flex items-center gap-1.5 sm:gap-2.5 shrink-0 pointer-events-auto pr-[124px] sm:pr-[126px] lg:pr-0 transition-opacity duration-200 ${
+              mobileOpen
+                ? "sm:opacity-0 sm:pointer-events-none lg:opacity-100 lg:pointer-events-auto"
+                : ""
+            }`}
+          >
             <button
               type="button"
               onClick={toggleHudMode}
               aria-pressed={hudMode}
               title="Toggle Telemetry HUD Overlay"
-              className={`hidden sm:inline-flex items-center gap-1.5 px-3 min-h-[40px] rounded-full font-mission text-[11px] uppercase tracking-wider transition-all ${
+              className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 xl:px-3 min-h-[40px] rounded-full font-mission text-[11px] uppercase tracking-wider transition-all ${
                 hudMode
                   ? "bg-cyan-400/20 text-cyan-200 border border-cyan-300/50 shadow-[0_0_18px_rgba(56,189,248,0.3)]"
                   : "liquid-glass-tab text-slate-300 hover:text-white"
@@ -937,36 +999,12 @@ export function Navbar() {
               rel="noopener noreferrer"
               variant="primary"
               size="md"
-              contentClassName="px-3 sm:px-6 lg:px-7 min-h-[40px] sm:min-h-[44px] lg:min-h-[54px] text-xs sm:text-[13px] font-btn tracking-tight"
+              wrapClassName="hidden sm:inline-flex"
+              contentClassName="px-4 xl:px-6 min-h-[40px] sm:min-h-[44px] xl:min-h-[54px] text-xs xl:text-[13px] font-btn tracking-tight"
             >
               <span>Launch 3D</span>
               <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
             </LiquidGlassButton>
-
-            <div ref={menuButtonRef} className="lg:hidden">
-              <LiquidGlassButton
-                type="button"
-                variant="glass"
-                size="sm"
-                onClick={toggleMobile}
-                aria-expanded={mobileOpen}
-                aria-controls="mobile-liquid-nav"
-                aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
-                contentClassName="px-2.5 sm:px-3.5 min-h-[40px] sm:min-h-[44px]"
-              >
-                {mobileOpen ? (
-                  <>
-                    <X className="w-4 h-4" aria-hidden="true" />
-                    <span>Close</span>
-                  </>
-                ) : (
-                  <>
-                    <Menu className="w-4 h-4" aria-hidden="true" />
-                    <span>Menu</span>
-                  </>
-                )}
-              </LiquidGlassButton>
-            </div>
           </div>
         </div>
       </header>
@@ -974,133 +1012,249 @@ export function Navbar() {
       {/* Reserve clean top clearance on inner documentation pages */}
       {pathname !== "/" && <div aria-hidden="true" className="h-20 sm:h-24" />}
 
-      {/* Mobile: liquid orb morph menu with a shared glass lens */}
-      {mobileMounted && (
+      {/* Mobile Backdrop Scrim (< lg) */}
+      <button
+        type="button"
+        tabIndex={-1}
+        aria-hidden="true"
+        aria-label="Close mobile navigation menu"
+        onClick={() => setMobileMenuState(false, true)}
+        className={`fixed inset-0 z-[45] lg:hidden bg-space-950/55 backdrop-blur-sm transition-opacity duration-300 ${
+          mobileOpen ? "opacity-100 pointer-events-auto cursor-default" : "opacity-0 pointer-events-none"
+        }`}
+      />
+
+      {/* Mobile Liquid-Glass Morphing Menu Container (Top-Right Origin, < lg) */}
+      <nav
+        id="glass-menu"
+        ref={mobilePanelRef}
+        aria-label="Mobile Navigation"
+        onClick={() => {
+          if (!mobileOpen) setMobileMenuState(true);
+        }}
+        onPointerMove={handleMobilePanelPointerMove}
+        onPointerLeave={handleMobilePanelPointerLeave}
+        className={`mobile-glass-panel lg:hidden z-50 ${
+          mobileOpen ? "is-open" : "is-closed"
+        }`}
+      >
+        {/* Scroll viewport (only scrolls on very short screens) */}
         <div
-          id="mobile-liquid-nav"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Mobile Navigation"
-          data-phase={mobilePhase}
-          onKeyDown={handleMobileKeyDown}
-          className="liquid-glass-mobile-backdrop fixed inset-0 z-40 lg:hidden"
+          id="mobile-menu-content"
+          aria-hidden={!mobileOpen}
+          className="mobile-glass-content"
         >
-          <button
-            type="button"
-            tabIndex={-1}
-            aria-label="Close mobile navigation menu"
-            onClick={() => closeMobile(true)}
-            className="liquid-glass-mobile-scrim absolute inset-0 bg-space-950/60 backdrop-blur-md cursor-default"
-          />
+          {/* Natural-height inner column: measured to size the open panel */}
           <div
-            ref={mobileSheetRef}
-            className="liquid-glass-mobile-sheet isolate absolute top-[76px] right-3 left-3 sm:left-auto sm:w-[22rem] max-h-[calc(100dvh-92px)] overflow-y-auto overscroll-contain rounded-[32px] p-3"
+            ref={mobileInnerRef}
+            className="mobile-glass-inner"
+            onPointerLeave={() => setPreviewMeta(null)}
           >
-            <GlassSurface
-              layer
-              borderRadius={32}
-              distortionScale={-105}
-              displace={0.9}
-              blur={16}
-              backgroundOpacity={0.28}
-              tint="rgba(10, 15, 28, 0.54)"
-              saturation={1.4}
-            />
-            <div className="relative z-10 flex items-center justify-between px-3 pt-2 pb-3">
-              <span className="font-mission text-[11px] uppercase tracking-[0.2em] text-slate-300">
-                Outpost Navigation
-              </span>
-              <span className="font-mission text-[11px] text-mars-300">
-                SOL 1&ndash;11
-              </span>
+            {/* Header: site wordmark (toggle button is pinned over the right side) */}
+            <div className="mobile-glass-header">
+              <Link
+                href="/"
+                aria-label="PHOBOSIA Home"
+                tabIndex={mobileOpen ? undefined : -1}
+                onClick={() => setMobileMenuState(false, false)}
+                className="inline-flex items-center -ml-1 py-1 rounded-lg transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/80"
+              >
+                <Image
+                  src="/phobosia-logo.webp"
+                  alt="PHOBOSIA"
+                  width={1600}
+                  height={533}
+                  className="h-8 w-auto object-contain object-left select-none"
+                />
+              </Link>
             </div>
 
-            <nav
-              ref={mobileListRef}
-              aria-label="Mobile Navigation Links"
-              onPointerMove={handleMobilePointer}
-              onPointerDown={handleMobilePointer}
-              onPointerLeave={() => moveMobileLens(null)}
-              className="relative flex flex-col gap-0.5"
-            >
-              <span
-                aria-hidden="true"
-                className="liquid-glass-mobile-lens pointer-events-none absolute left-0 right-0 top-0 z-[1] rounded-[22px]"
-                style={{
-                  height: `${mobileLens.height}px`,
-                  opacity: mobileLens.visible ? 1 : 0,
-                  transform: `translate3d(0, ${mobileLens.top}px, 0) scale(${
-                    mobileLens.moving ? "1.02, 0.94" : "1, 1"
-                  })`,
-                }}
-              />
-
-              {allLinks.map((link, idx) => {
+            {/* Primary Links */}
+            <ul className="flex flex-col gap-0.5">
+              {primaryLinks.map((link, idx) => {
                 const isActive =
                   link.href === "/"
                     ? pathname === "/"
                     : pathname.startsWith(link.href);
                 return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    ref={(el) => {
-                      mobileRowRefs.current[idx] = el;
-                    }}
-                    aria-current={isActive ? "page" : undefined}
-                    style={{ "--tile-delay": `${50 + idx * 34}ms` } as React.CSSProperties}
-                    onFocus={() => moveMobileLens(idx)}
-                    onClick={() => closeMobile(false)}
-                    className={`liquid-glass-mobile-tile relative z-[2] flex items-center gap-4 rounded-[22px] px-4 min-h-[52px] font-nav text-[15px] select-none active:scale-[0.98] transition-[color,transform] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/80 ${
-                      isActive ? "text-white" : "text-slate-200/85"
-                    }`}
-                  >
-                    <span
-                      className={`font-mission text-[11px] tabular-nums tracking-wider w-6 ${
-                        isActive ? "text-mars-300" : "text-slate-400"
-                      }`}
+                  <li key={link.href} className="mobile-reveal-mask">
+                    <div
+                      className="mobile-reveal-item"
+                      style={
+                        {
+                          "--reveal-delay": `${0.08 + idx * 0.035}s`,
+                        } as React.CSSProperties
+                      }
                     >
-                      {String(idx + 1).padStart(2, "0")}
-                    </span>
-                    <span className="flex-1">{link.label}</span>
-                    <ChevronRight
-                      className={`w-4 h-4 transition-opacity ${
-                        isActive ? "opacity-90 text-cyan-200" : "opacity-30"
-                      }`}
-                      aria-hidden="true"
-                    />
-                  </Link>
+                      <Link
+                        href={link.href}
+                        tabIndex={mobileOpen ? undefined : -1}
+                        aria-current={isActive ? "page" : undefined}
+                        onPointerEnter={(e) => {
+                          if (e.pointerType !== "touch") {
+                            setPreviewMeta({ index: link.index, tagline: link.tagline });
+                          }
+                        }}
+                        onFocus={() =>
+                          setPreviewMeta({ index: link.index, tagline: link.tagline })
+                        }
+                        onBlur={() => setPreviewMeta(null)}
+                        onClick={() => setMobileMenuState(false, false)}
+                        className={`mobile-nav-link text-[26px] sm:text-[29px] font-normal tracking-[-0.025em] leading-[1.22] py-[3px] rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/80 ${
+                          isActive ? "active" : ""
+                        }`}
+                      >
+                        <span className="mobile-nav-dash" aria-hidden="true" />
+                        <span>{link.label}</span>
+                        <span className="mobile-nav-dot" aria-hidden="true" />
+                      </Link>
+                    </div>
+                  </li>
                 );
               })}
-            </nav>
+            </ul>
 
-            <div className="liquid-glass-mobile-tile mt-3 pt-3 border-t border-white/12 flex flex-col sm:flex-row gap-2" style={{ "--tile-delay": "420ms" } as React.CSSProperties}>
+            <div className="mobile-glass-divider" aria-hidden="true" />
+
+            {/* Dossier Routes */}
+            <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[14px] font-normal">
+              {archiveLinks.map((item, idx) => {
+                const isSubActive = pathname.startsWith(item.href);
+                return (
+                  <li key={item.href} className="mobile-reveal-mask">
+                    <div
+                      className="mobile-reveal-item"
+                      style={
+                        {
+                          "--reveal-delay": `${0.3 + Math.floor(idx / 2) * 0.035}s`,
+                        } as React.CSSProperties
+                      }
+                    >
+                      <Link
+                        href={item.href}
+                        tabIndex={mobileOpen ? undefined : -1}
+                        aria-current={isSubActive ? "page" : undefined}
+                        onPointerEnter={(e) => {
+                          if (e.pointerType !== "touch") {
+                            setPreviewMeta({ index: item.index, tagline: item.tagline });
+                          }
+                        }}
+                        onFocus={() =>
+                          setPreviewMeta({ index: item.index, tagline: item.tagline })
+                        }
+                        onBlur={() => setPreviewMeta(null)}
+                        onClick={() => setMobileMenuState(false, false)}
+                        className={`inline-flex items-center gap-1.5 py-1 rounded transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/80 ${
+                          isSubActive ? "text-white font-medium" : "text-white/70 hover:text-white"
+                        }`}
+                      >
+                        {isSubActive && (
+                          <span
+                            aria-hidden="true"
+                            className="w-1.5 h-1.5 rounded-full bg-mars-300 shrink-0"
+                          />
+                        )}
+                        <span className="truncate">{item.label}</span>
+                      </Link>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+
+            <div className="mobile-glass-divider" aria-hidden="true" />
+
+            {/* Actions: primary launch button + GitHub */}
+            <div
+              className="mobile-reveal-item flex items-center gap-4"
+              style={{ "--reveal-delay": "0.38s" } as React.CSSProperties}
+            >
               <LiquidGlassButton
                 href="https://phobosia.sim623.site/"
                 target="_blank"
                 rel="noopener noreferrer"
                 variant="primary"
-                size="md"
-                fullWidth
-                wrapClassName="flex-1"
-                contentClassName="font-btn"
+                size="sm"
+                magnetic={false}
+                tabIndex={mobileOpen ? undefined : -1}
+                onClick={() => setMobileMenuState(false, false)}
+                contentClassName="px-4 min-h-[40px] text-[13px] font-btn"
               >
-                <span>Open 3D Outpost</span>
-                <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
+                <span>Launch 3D Outpost</span>
+                <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
               </LiquidGlassButton>
-              <LiquidGlassButton
+              <a
                 href="https://github.com/osa623/Phobosia-Martian-exploration-experience-powered-by-NASA-Data"
                 target="_blank"
                 rel="noopener noreferrer"
-                variant="glass"
-                size="md"
+                tabIndex={mobileOpen ? undefined : -1}
+                onClick={() => setMobileMenuState(false, false)}
+                className="inline-flex items-center gap-1 min-h-[40px] text-[13px] text-white/75 hover:text-white transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/80"
               >
-                <span>GitHub Source</span>
-              </LiquidGlassButton>
+                <span>GitHub</span>
+                <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
+              </a>
+            </div>
+
+            {/* Metadata row: route index + tagline, HUD toggle */}
+            <div
+              className="mobile-reveal-item flex items-center justify-between gap-3"
+              style={{ "--reveal-delay": "0.42s" } as React.CSSProperties}
+            >
+              <div className="flex items-center gap-2.5 min-w-0 text-[12px] tracking-wide">
+                <span className="font-mono text-white/45 shrink-0 tabular-nums">
+                  <span className="text-white/90">{displayMeta.index}</span> /{" "}
+                  {String(allLinks.length).padStart(2, "0")}
+                </span>
+                <span className="text-white/60 truncate">{displayMeta.tagline}</span>
+              </div>
+              <button
+                type="button"
+                tabIndex={mobileOpen ? undefined : -1}
+                onClick={toggleHudMode}
+                aria-pressed={hudMode}
+                className={`shrink-0 inline-flex items-center gap-1.5 font-mission text-[11px] uppercase tracking-wider px-2.5 py-1 rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/80 ${
+                  hudMode
+                    ? "bg-cyan-400/20 text-cyan-200 border-cyan-300/45"
+                    : "bg-white/[0.06] text-white/70 border-white/15 hover:text-white"
+                }`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    hudMode ? "bg-cyan-300 shadow-[0_0_6px_#38bdf8]" : "bg-white/45"
+                  }`}
+                />
+                <span>HUD</span>
+              </button>
             </div>
           </div>
         </div>
-      )}
+
+        {/* Toggle: pinned top-right in both states, hamburger morphs into an X */}
+        <button
+          ref={mobileToggleBtnRef}
+          type="button"
+          id="toggle-menu-btn"
+          aria-expanded={mobileOpen}
+          aria-controls="mobile-menu-content"
+          aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+          onClick={(e) => {
+            e.stopPropagation();
+            setMobileMenuState(!mobileOpen, mobileOpen);
+          }}
+          className="mobile-pill-btn font-nav font-medium text-[13.5px] tracking-wide cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/80"
+        >
+          <span className="menu-icon" aria-hidden="true">
+            <span className="menu-icon-bar" />
+            <span className="menu-icon-bar" />
+          </span>
+          <span className="mobile-btn-label-wrapper" aria-hidden="true">
+            <span className="mobile-btn-label mobile-btn-label-menu">Menu</span>
+            <span className="mobile-btn-label mobile-btn-label-close">Close</span>
+          </span>
+        </button>
+      </nav>
     </>
   );
 }
